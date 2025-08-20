@@ -1,0 +1,2119 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Mouse Training Step Record - Matrix View</title>
+  <!-- 
+  CHANGELOG - Matrix Version:
+  1. Added matrix-wrapper and matrix-grid CSS classes for matrix layout
+  2. Replaced renderSteps() with renderMatrix() for matrix-based rendering  
+  3. Updated drag-and-drop to work with matrix cells (toggles assignment)
+  4. Added sticky headers for both rows (steps) and columns (mice)
+  5. Added responsive fallback to original layout for mobile (≤768px)
+  6. Maintained all existing state structure and functionality
+  -->
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      margin: 0; 
+      padding: 0; 
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    
+    .app-header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      padding: 20px;
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      position: sticky;
+      top: 0;
+      z-index: 100;
+    }
+    
+    .header-content {
+      max-width: 1400px;
+      margin: 0 auto;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 20px;
+    }
+    
+    .app-title {
+      font-size: 2rem;
+      font-weight: 700;
+      color: #2c3e50;
+      margin: 0;
+    }
+    
+    #controls {
+      display: flex;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+    
+    #controls button {
+      padding: 12px 20px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      font-weight: 500;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    #controls button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    #controls button.active {
+      background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
+      box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
+    }
+    
+    .main-content {
+      max-width: calc(100vw - 40px);
+      margin: 30px auto;
+      padding: 0 20px;
+      display: grid;
+      grid-template-columns: minmax(1000px, 3fr) minmax(280px, 1fr);
+      gap: 30px;
+      min-height: calc(100vh - 200px);
+      width: fit-content;
+      min-width: 1400px;
+    }
+    
+    .section {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 30px;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+      overflow: hidden;
+    }
+    
+    .section-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 25px;
+      padding-bottom: 15px;
+      border-bottom: 2px solid #f1f3f4;
+    }
+    
+    .section-title {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: #2c3e50;
+      margin: 0;
+    }
+
+    /* Matrix Layout Styles */
+    .matrix-wrapper {
+      max-height: 70vh;
+      overflow: auto;
+      border: 2px solid #e1e8ed;
+      border-radius: 12px;
+      background: white;
+      min-width: 100%;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: var(--step-column-width, 600px) repeat(var(--mouse-count, 0), 50px);
+      gap: 1px;
+      background: #e1e8ed;
+      min-width: min-content;
+      width: 100%;
+    }
+
+    .matrix-header {
+      background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+      padding: 12px;
+      font-weight: 600;
+      color: #2c3e50;
+      position: sticky;
+      top: 0;
+      z-index: 10;
+      border-bottom: 2px solid #667eea;
+    }
+
+    .matrix-header.step-header {
+      text-align: left;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+    }
+
+    .matrix-header.mouse-header {
+      text-align: center;
+      min-height: 50px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.9rem;
+      padding: 8px 4px;
+      position: relative;
+    }
+
+    .matrix-header.mouse-header.draggable {
+      cursor: move;
+    }
+
+    .matrix-header.mouse-header.draggable:hover {
+      background: linear-gradient(135deg, #e8f2ff 0%, #d4e6ff 100%);
+      transform: scale(1.02);
+    }
+
+    .matrix-header.mouse-header.dragging {
+      opacity: 0.5;
+      transform: rotate(2deg);
+    }
+
+    .matrix-header.mouse-header.drag-over {
+      border-left: 4px solid #667eea;
+      border-right: 4px solid #667eea;
+    }
+
+    .column-drag-handle {
+      position: absolute;
+      top: 5px;
+      right: 5px;
+      width: 12px;
+      height: 12px;
+      background: #667eea;
+      border-radius: 2px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 8px;
+      cursor: move;
+    }
+
+    .matrix-header.mouse-header.draggable .column-drag-handle {
+      display: flex;
+    }
+
+    .matrix-step-cell {
+      background: white;
+      padding: 15px;
+      border-right: 2px solid #667eea;
+      min-height: 60px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: relative;
+    }
+
+    .matrix-step-cell.draggable {
+      cursor: move;
+    }
+
+    .matrix-step-cell.draggable:hover {
+      background: #f8f9ff;
+    }
+
+    .drag-handle {
+      position: absolute;
+      left: 5px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 20px;
+      height: 30px;
+      background: #667eea;
+      border-radius: 4px;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 12px;
+      cursor: move;
+    }
+
+    .matrix-step-cell.draggable .drag-handle {
+      display: flex;
+    }
+
+    .resize-handle {
+      position: absolute;
+      right: -2px;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: #667eea;
+      cursor: col-resize;
+      display: none;
+      opacity: 0.7;
+    }
+
+    .resize-handle:hover {
+      opacity: 1;
+      background: #5a6fd8;
+    }
+
+    .matrix-step-cell.resizable .resize-handle {
+      display: block;
+    }
+
+    .matrix-row {
+      display: contents;
+    }
+
+    .matrix-row.dragging {
+      opacity: 0.5;
+    }
+
+    .matrix-row.drag-over {
+      filter: brightness(1.1);
+    }
+
+    .matrix-step-title {
+      flex: 1;
+      font-weight: 600;
+      color: #2c3e50;
+      line-height: 1.4;
+      margin: 0;
+      padding: 8px;
+      border-radius: 8px;
+      transition: all 0.3s ease;
+      white-space: pre-line;
+    }
+
+    .matrix-step-title[contenteditable="true"] {
+      border: 2px dashed #667eea;
+      background: #f8f9ff;
+    }
+
+    .matrix-step-title[contenteditable="true"]:focus {
+      outline: none;
+      border-color: #764ba2;
+      background: white;
+    }
+
+    .matrix-assignment-cell {
+      background: white;
+      min-height: 60px;
+      position: relative;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .matrix-assignment-cell:hover {
+      background: #f8f9ff;
+      transform: scale(1.05);
+    }
+
+    .matrix-assignment-cell.drag-over {
+      background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+      border: 2px dashed #667eea;
+    }
+
+    .matrix-assignment-indicator {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.7rem;
+      cursor: grab;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+
+    .matrix-assignment-indicator:hover {
+      transform: scale(1.1);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+      border-radius: 12px;
+    }
+
+    .matrix-assignment-indicator:active {
+      cursor: grabbing;
+    }
+
+    .delete-btn {
+      background: #ff6b6b;
+      color: white;
+      border: none;
+      border-radius: 50%;
+      width: 28px;
+      height: 28px;
+      font-size: 16px;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      flex-shrink: 0;
+      margin-left: 10px;
+    }
+    
+    .delete-btn:hover {
+      background: #ee5a24;
+      transform: scale(1.1);
+    }
+    
+    .mouse-list {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+      gap: 15px;
+      max-height: 400px;
+      overflow-y: auto;
+      padding-right: 10px;
+    }
+    
+    .mouse-card {
+      background: white;
+      padding: 22px;
+      border-radius: 18px;
+      box-shadow: 0 3px 15px rgba(0,0,0,0.08);
+      transition: all 0.3s ease;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      border: 2px solid transparent;
+      position: relative;
+      overflow: hidden;
+      cursor: grab;
+      min-height: 90px;
+    }
+
+    .mouse-card::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      top: 0;
+      bottom: 0;
+      width: 4px;
+      background: currentColor;
+      opacity: 0.3;
+    }
+
+    .mouse-card:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 8px 25px rgba(0,0,0,0.15);
+      border-color: currentColor;
+    }
+
+    .mouse-card:active {
+      cursor: grabbing;
+    }
+    
+    .mouse-info {
+      flex: 1;
+    }
+    
+    .mouse-id {
+      font-weight: 600;
+      font-size: 1rem;
+      margin-bottom: 4px;
+      display: block;
+    }
+    
+    .mouse-sessions {
+      font-size: 0.85rem;
+      opacity: 0.8;
+    }
+    
+    .mouse-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    
+    .color-display {
+      width: 20px;
+      height: 20px;
+      border: 2px solid rgba(255,255,255,0.8);
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .color-display:hover {
+      transform: scale(1.2);
+      box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    }
+    
+    .add-mouse-form {
+      background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+      padding: 25px;
+      border-radius: 15px;
+      margin-top: 25px;
+      border: 2px solid #e1e8ed;
+    }
+    
+    .add-mouse-form h3 {
+      margin: 0 0 20px 0;
+      color: #2c3e50;
+      font-size: 1.2rem;
+    }
+    
+    .form-group {
+      margin-bottom: 15px;
+    }
+    
+    .form-group label {
+      display: block;
+      margin-bottom: 5px;
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    
+    .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e8ed;
+      border-radius: 8px;
+      font-size: 1rem;
+      transition: all 0.3s ease;
+    }
+    
+    .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .color-options {
+      display: flex;
+      gap: 10px;
+      margin: 15px 0;
+    }
+    
+    .color-option {
+      width: 30px;
+      height: 30px;
+      border: 3px solid transparent;
+      border-radius: 50%;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+    }
+    
+    .color-option:hover {
+      transform: scale(1.1);
+    }
+    
+    .color-option.selected {
+      border-color: #2c3e50;
+      transform: scale(1.1);
+    }
+    
+    .submit-btn {
+      width: 100%;
+      padding: 12px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .submit-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .add-step-form {
+      background: linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%);
+      padding: 25px;
+      border-radius: 15px;
+      margin-top: 25px;
+      border: 2px solid #e1e8ed;
+    }
+    
+    .add-step-form textarea {
+      width: 100%;
+      padding: 15px;
+      border: 2px solid #e1e8ed;
+      border-radius: 8px;
+      font-size: 1rem;
+      resize: vertical;
+      min-height: 80px;
+      font-family: inherit;
+      transition: all 0.3s ease;
+    }
+    
+    .add-step-form textarea:focus {
+      outline: none;
+      border-color: #667eea;
+      box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+    
+    .add-step-btn {
+      margin-top: 15px;
+      padding: 12px 24px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.3s ease;
+      box-shadow: 0 4px 15px rgba(102, 126, 234, 0.3);
+    }
+    
+    .add-step-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 20px rgba(102, 126, 234, 0.4);
+    }
+    
+    .empty-message {
+      color: #95a5a6;
+      font-style: italic;
+      text-align: center;
+      padding: 30px;
+      font-size: 1rem;
+    }
+    
+    .edit-panel {
+      position: fixed;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: white;
+      border-radius: 15px;
+      padding: 30px;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+      z-index: 2000;
+      min-width: 300px;
+      max-width: 400px;
+    }
+    
+    .edit-panel h3 {
+      margin: 0 0 20px 0;
+      color: #2c3e50;
+    }
+    
+    .edit-panel .form-group {
+      margin-bottom: 20px;
+    }
+    
+    .edit-panel .form-group label {
+      display: block;
+      margin-bottom: 8px;
+      font-weight: 500;
+      color: #2c3e50;
+    }
+    
+    .edit-panel .form-group input {
+      width: 100%;
+      padding: 12px;
+      border: 2px solid #e1e8ed;
+      border-radius: 8px;
+      font-size: 1rem;
+    }
+    
+    .edit-panel .form-group input:focus {
+      outline: none;
+      border-color: #667eea;
+    }
+    
+    .edit-panel .button-group {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+    }
+    
+    .edit-panel button {
+      padding: 10px 20px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 500;
+      transition: all 0.3s ease;
+    }
+    
+    .edit-panel .save-btn {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+    }
+    
+    .edit-panel .cancel-btn {
+      background: #95a5a6;
+      color: white;
+    }
+    
+    .edit-panel button:hover {
+      transform: translateY(-1px);
+    }
+    
+    #tooltip {
+      position: fixed;
+      background: rgba(44, 62, 80, 0.95);
+      color: white;
+      padding: 10px 15px;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      pointer-events: none;
+      display: none;
+      z-index: 1000;
+      max-width: 250px;
+      backdrop-filter: blur(10px);
+      box-shadow: 0 5px 20px rgba(0,0,0,0.3);
+    }
+    
+    .overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(0,0,0,0.5);
+      z-index: 1999;
+    }
+    
+    /* Scrollbar styling */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    
+    ::-webkit-scrollbar-track {
+      background: #f1f1f1;
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      border-radius: 4px;
+    }
+    
+    ::-webkit-scrollbar-thumb:hover {
+      background: linear-gradient(135deg, #5a6fd8 0%, #6a4190 100%);
+    }
+    
+    /* Large screens optimization */
+    @media (min-width: 1600px) {
+      .main-content {
+        grid-template-columns: minmax(1000px, 3fr) minmax(400px, 1fr);
+        min-width: 1600px;
+        max-width: calc(100vw - 60px);
+      }
+      
+      .matrix-grid {
+        grid-template-columns: var(--step-column-width, 700px) repeat(var(--mouse-count, 0), 60px);
+      }
+      
+      .matrix-wrapper {
+        max-height: 75vh;
+      }
+    }
+    
+    /* Medium screens optimization */
+    @media (min-width: 1200px) and (max-width: 1599px) {
+      .main-content {
+        grid-template-columns: minmax(900px, 2.5fr) minmax(380px, 1fr);
+        min-width: 1500px;
+      }
+      
+      .matrix-grid {
+        grid-template-columns: var(--step-column-width, 650px) repeat(var(--mouse-count, 0), 55px);
+      }
+    }
+    
+    /* Tablet landscape */
+    @media (min-width: 769px) and (max-width: 1199px) {
+      .main-content {
+        grid-template-columns: minmax(700px, 2fr) minmax(320px, 1fr);
+        min-width: 1100px;
+        gap: 20px;
+      }
+      
+      .matrix-grid {
+        grid-template-columns: var(--step-column-width, 550px) repeat(var(--mouse-count, 0), 45px);
+      }
+      
+      .section {
+        padding: 25px;
+      }
+    }
+    
+    /* Mobile and small tablets */
+    @media (max-width: 768px) {
+      .main-content {
+        grid-template-columns: 1fr;
+        gap: 20px;
+        min-width: auto;
+        padding: 0 10px;
+      }
+      
+      .header-content {
+        flex-direction: column;
+        align-items: stretch;
+      }
+      
+      .app-title {
+        text-align: center;
+        font-size: 1.5rem;
+      }
+      
+      #controls {
+        justify-content: center;
+      }
+      
+      .section {
+        padding: 20px;
+      }
+      
+      /* Mobile fallback: show original card layout */
+      .matrix-wrapper {
+        display: none;
+      }
+      
+      .steps-grid {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 20px;
+        max-height: 600px;
+        overflow-y: auto;
+        padding-right: 10px;
+      }
+      
+      .mouse-list {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    /* Desktop: hide fallback card layout */
+    @media (min-width: 769px) {
+      .steps-grid {
+        display: none;
+      }
+    }
+    
+    /* Animation for new elements */
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(20px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+    
+    .mouse-card, .matrix-assignment-indicator {
+      animation: slideIn 0.3s ease-out;
+    }
+  </style>
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-content">
+      <h1 class="app-title">Lever Task Training Progress Tracking Table</h1>
+      <div id="controls">
+        <button id="edit-mode-btn">Enable Edit Mode</button>
+        <button id="export-btn">Export Data</button>
+        <button id="backup-btn">Download Backup</button>
+        <button id="import-btn">Import Data</button>
+        <input type="file" id="import-file" accept="application/json" style="display:none">
+      </div>
+    </div>
+  </header>
+
+  <main class="main-content">
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Tracking</h2>
+      </div>
+      
+      <!-- Matrix Layout for Desktop -->
+      <div class="matrix-wrapper">
+        <div class="matrix-grid"></div>
+      </div>
+      
+      <!-- Fallback Card Layout for Mobile -->
+      <div class="steps-grid"></div>
+      
+      <div id="add-step-form" class="add-step-form" style="display:none;">
+        <h3>Add New Training Step</h3>
+        <div class="form-group">
+          <label for="new-step-description">Step Description:</label>
+          <textarea id="new-step-description" placeholder="Enter the description for the new training step..." rows="4"></textarea>
+        </div>
+        <button id="add-step-button" class="add-step-btn">Add Step</button>
+      </div>
+    </section>
+    
+    <section class="section">
+      <div class="section-header">
+        <h2 class="section-title">Mouse List</h2>
+      </div>
+      <div class="mouse-list"></div>
+      <div class="add-mouse-form">
+        <h3>Add New Mouse</h3>
+        <form id="add-mouse-form">
+          <div class="form-group">
+            <label for="mouse-id">Mouse ID:</label>
+            <input type="text" id="mouse-id" placeholder="Enter mouse ID" required>
+          </div>
+          <div class="form-group">
+            <label for="mouse-sessions">Session Count (Optional):</label>
+            <input type="number" id="mouse-sessions" placeholder="Enter session count">
+          </div>
+          <div class="form-group">
+            <label>Color:</label>
+            <div id="color-options" class="color-options"></div>
+          </div>
+          <button type="submit" class="submit-btn">Add Mouse</button>
+        </form>
+      </div>
+    </section>
+  </main>
+
+  <div id="tooltip"></div>
+
+  <script>
+    // State and persistence
+    let state = { mice: [], steps: [], mouseOrder: [] };
+    let editMode = false;
+    let stepColumnWidth = 600; // Increased default width
+    let draggedRowIndex = null;
+    let draggedColumnId = null;
+    
+    // Dynamic column width adjustment based on screen size
+    function getOptimalStepColumnWidth() {
+      const screenWidth = window.innerWidth;
+      if (screenWidth >= 1600) return 700;
+      if (screenWidth >= 1200) return 650;
+      if (screenWidth >= 769) return 550;
+      return 600; // Default for base layout
+    }
+    
+    // Update step column width on resize
+    function updateStepColumnWidth() {
+      stepColumnWidth = getOptimalStepColumnWidth();
+      renderMatrix();
+    }
+    
+    // Initialize optimal width
+    stepColumnWidth = getOptimalStepColumnWidth();
+    function saveState() {
+      // 保存到服务器
+      fetch('/api/data', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(state)
+      })
+      .then(response => response.json())
+      .then(data => {
+        if (!data.success) {
+          console.error('Failed to save data to server');
+          // 如果服务器保存失败，仍保存到localStorage作为备份
+          localStorage.setItem('mouseTrainingData', JSON.stringify(state));
+        }
+      })
+      .catch(error => {
+        console.error('Error saving to server:', error);
+        // 如果网络错误，保存到localStorage作为备份
+        localStorage.setItem('mouseTrainingData', JSON.stringify(state));
+      });
+    }
+
+    async function loadState() {
+      try {
+        // 从服务器加载数据
+        const response = await fetch('/api/data');
+        if (response.ok) {
+          const serverData = await response.json();
+          state = serverData;
+          console.log('Data loaded from server');
+          
+          // 确保mouseOrder存在，用于向后兼容
+          if (!state.mouseOrder) {
+            const allMice = [...state.mice];
+            state.steps.forEach(step => {
+              step.mice.forEach(mouse => {
+                if (!allMice.some(m => m.id === mouse.id)) {
+                  allMice.push(mouse);
+                }
+              });
+            });
+            state.mouseOrder = allMice.map(m => m.id).sort();
+            saveState(); // 保存更新后的状态
+          }
+        } else {
+          throw new Error('Failed to load from server');
+        }
+      } catch (error) {
+        console.warn('Could not load from server, trying localStorage:', error);
+        
+        // 如果服务器加载失败，尝试从localStorage加载
+        const saved = localStorage.getItem('mouseTrainingData');
+        if (saved) {
+          state = JSON.parse(saved);
+          // 确保mouseOrder存在
+          if (!state.mouseOrder) {
+            const allMice = [...state.mice];
+            state.steps.forEach(step => {
+              step.mice.forEach(mouse => {
+                if (!allMice.some(m => m.id === mouse.id)) {
+                  allMice.push(mouse);
+                }
+              });
+            });
+            state.mouseOrder = allMice.map(m => m.id).sort();
+          }
+          // 尝试将localStorage数据同步到服务器
+          saveState();
+        } else {
+          initializeDefaultData();
+        }
+      }
+    }
+    // Color options
+    const defaultColors = ['#aecbfa', '#d7aefb', '#ccff90']; // Light Blue, Light Purple, Light Green
+    let selectedColor = defaultColors[0];
+
+    function initializeDefaultData() {
+      // Initialize with data from mouseTrainingData.json
+       state.mice = [
+         { "id": "C003", "sessions": "", "color": "#d7aefb" },
+         { "id": "C004", "sessions": "", "color": "#d7aefb" },
+         { "id": "X013", "sessions": "", "color": "#d7aefb" },
+         { "id": "C006", "sessions": "", "color": "#d7aefb" },
+         { "id": "Y006", "sessions": "", "color": "#aecbfa" },
+         { "id": "X009", "sessions": "", "color": "#aecbfa" },
+         { "id": "X010", "sessions": "", "color": "#aecbfa" },
+         { "id": "X011", "sessions": "", "color": "#aecbfa" },
+         { "id": "X012", "sessions": "", "color": "#aecbfa" },
+         { "id": "T022", "sessions": "", "color": "#ccff90" },
+         { "id": "T023", "sessions": "", "color": "#ccff90" },
+         { "id": "T024", "sessions": "", "color": "#ccff90" },
+         { "id": "T025", "sessions": "", "color": "#ccff90" }
+       ];
+      
+      // Initialize steps with actual data from mouseTrainingData.json
+      state.steps = [
+        {
+          "title": "0. Habituation",
+          "mice": [
+            { "id": "C003", "sessions": "", "color": "#d7aefb" },
+            { "id": "C004", "sessions": "", "color": "#d7aefb" },
+            { "id": "X013", "sessions": "", "color": "#d7aefb" },
+            { "id": "C006", "sessions": "", "color": "#d7aefb" },
+            { "id": "Y006", "sessions": "", "color": "#aecbfa" },
+            { "id": "X009", "sessions": "", "color": "#aecbfa" },
+            { "id": "X010", "sessions": "", "color": "#aecbfa" },
+            { "id": "X011", "sessions": "", "color": "#aecbfa" },
+            { "id": "X012", "sessions": "", "color": "#aecbfa" },
+            { "id": "T022", "sessions": "", "color": "#ccff90" },
+            { "id": "T023", "sessions": "", "color": "#ccff90" },
+            { "id": "T024", "sessions": "", "color": "#ccff90" },
+            { "id": "T025", "sessions": "", "color": "#ccff90" }
+          ]
+        },
+        {
+          "title": "1a. Touch – Reward (M). (1 lever, LED constantly on)",
+          "mice": []
+        },
+        {
+          "title": "1b. Push – Reward (M)",
+          "mice": []
+        },
+        {
+          "title": "2. [Start] – LED on – Push – Reward (M) – [End]. (1 lever)",
+          "mice": []
+        },
+        {
+          "title": "3. [Start] – LED on – Push – Reward (A) – [End]. (1 lever, position changing)",
+          "mice": []
+        },
+        {
+          "title": "4. [Start] – 1 of 3 LED on – Push – Reward (A) – [End]. (3 lever)",
+          "mice": []
+        },
+        {
+          "title": "5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \n(↑ Repeat these 3 trials in the same order)",
+          "mice": []
+        },
+        {
+          "title": "6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \n                   LED 2 on – Push – Reward (M) in Interval 2 – \n                   LED 3 on – Push – Reward (A) – [End].",
+          "mice": []
+        },
+        {
+          "title": "7. [Start] – LED 1 on – Push – Interval 1 – \n                  LED 2 on – Push – Interval 2 – \n                  LED 3 on – Push – Reward (A) – [End].\n (AUTO group Final version)",
+          "mice": []
+        }
+      ];
+      
+      // Initialize mouse order from mouseTrainingData.json
+      state.mouseOrder = [
+        "C003", "C004", "C006", "X013", "Y006", "X009", "X010", "X011", "X012", "T022", "T023", "T024", "T025"
+      ];
+      
+      saveState();
+    }
+    
+    function getRandomColor() {
+      return defaultColors[Math.floor(Math.random() * defaultColors.length)];
+    }
+    function renderColorOptions(container, clickHandler) {
+      container.innerHTML = '';
+      defaultColors.forEach(col => {
+        const div = document.createElement('div');
+        div.className = 'color-option';
+        div.style.background = col;
+        if (col === selectedColor) div.classList.add('selected');
+        div.addEventListener('click', () => {
+          selectedColor = col;
+          Array.from(container.children).forEach(c => c.classList.remove('selected'));
+          div.classList.add('selected');
+          clickHandler(col);
+        });
+        container.appendChild(div);
+      });
+    }
+
+    // Get all mice (from list + assigned in steps) in custom order
+    function getAllMice() {
+      const allMice = [...state.mice];
+      state.steps.forEach(step => {
+        step.mice.forEach(mouse => {
+          if (!allMice.some(m => m.id === mouse.id)) {
+            allMice.push(mouse);
+          }
+        });
+      });
+      
+      // Ensure mouseOrder array is up to date
+      updateMouseOrder(allMice);
+      
+      // Return mice in the custom order
+      const orderedMice = [];
+      state.mouseOrder.forEach(mouseId => {
+        const mouse = allMice.find(m => m.id === mouseId);
+        if (mouse) {
+          orderedMice.push(mouse);
+        }
+      });
+      
+      // Add any mice not in the order array (newly added mice)
+      allMice.forEach(mouse => {
+        if (!orderedMice.some(m => m.id === mouse.id)) {
+          orderedMice.push(mouse);
+        }
+      });
+      
+      return orderedMice;
+    }
+
+    // Update mouse order array when mice are added or removed
+    function updateMouseOrder(allMice) {
+      if (!state.mouseOrder) {
+        state.mouseOrder = [];
+      }
+      
+      // Remove any mouse IDs that no longer exist
+      state.mouseOrder = state.mouseOrder.filter(mouseId => 
+        allMice.some(m => m.id === mouseId)
+      );
+      
+      // Add any new mice to the end of the order
+      allMice.forEach(mouse => {
+        if (!state.mouseOrder.includes(mouse.id)) {
+          state.mouseOrder.push(mouse.id);
+        }
+      });
+    }
+
+    // Check if mouse is assigned to step
+    function isMouseInStep(mouseId, stepIndex) {
+      return state.steps[stepIndex].mice.some(m => m.id === mouseId);
+    }
+
+    // Get mouse object by ID
+    function getMouseById(mouseId) {
+      // First check in state.mice
+      let mouse = state.mice.find(m => m.id === mouseId);
+      if (mouse) return mouse;
+      
+      // Then check in assigned mice
+      for (let step of state.steps) {
+        mouse = step.mice.find(m => m.id === mouseId);
+        if (mouse) return mouse;
+      }
+      return null;
+    }
+
+    // Render matrix layout
+    function renderMatrix() {
+      const matrixGrid = document.querySelector('.matrix-grid');
+      if (!matrixGrid) return;
+      
+      const allMice = getAllMice();
+      matrixGrid.style.setProperty('--mouse-count', allMice.length);
+      matrixGrid.style.setProperty('--step-column-width', `${stepColumnWidth}px`);
+      matrixGrid.innerHTML = '';
+
+      // Update main content width based on number of mice
+      const mainContent = document.querySelector('.main-content');
+      const totalWidth = stepColumnWidth + (allMice.length * 80) + 450; // 450 for second column + gap + padding
+      mainContent.style.width = `${Math.max(1200, totalWidth)}px`;
+
+      // Header row
+      const stepHeaderCell = document.createElement('div');
+      stepHeaderCell.className = 'matrix-header step-header';
+      stepHeaderCell.textContent = 'Training Steps';
+      matrixGrid.appendChild(stepHeaderCell);
+
+      allMice.forEach((mouse, mouseIndex) => {
+        const mouseHeaderCell = document.createElement('div');
+        mouseHeaderCell.className = 'matrix-header mouse-header';
+        mouseHeaderCell.textContent = mouse.id;
+        mouseHeaderCell.style.backgroundColor = mouse.color;
+        mouseHeaderCell.style.color = getContrastColor(mouse.color);
+        mouseHeaderCell.dataset.mouseId = mouse.id;
+        
+        if (editMode) {
+          mouseHeaderCell.classList.add('draggable');
+          mouseHeaderCell.draggable = true;
+          
+          // Add column drag handle
+          const columnDragHandle = document.createElement('div');
+          columnDragHandle.className = 'column-drag-handle';
+          columnDragHandle.innerHTML = '⋮';
+          mouseHeaderCell.appendChild(columnDragHandle);
+          
+          // Column drag events
+          mouseHeaderCell.addEventListener('dragstart', e => {
+            draggedColumnId = mouse.id;
+            mouseHeaderCell.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/plain', 'column');
+          });
+          
+          mouseHeaderCell.addEventListener('dragend', () => {
+            mouseHeaderCell.classList.remove('dragging');
+            document.querySelectorAll('.matrix-header.mouse-header').forEach(header => {
+              header.classList.remove('drag-over');
+            });
+            draggedColumnId = null;
+          });
+          
+          // Column drop zone
+          mouseHeaderCell.addEventListener('dragover', e => {
+            if (e.dataTransfer.types.includes('text/plain') && draggedColumnId && draggedColumnId !== mouse.id) {
+              e.preventDefault();
+              mouseHeaderCell.classList.add('drag-over');
+            }
+          });
+          
+          mouseHeaderCell.addEventListener('dragleave', e => {
+            if (!mouseHeaderCell.contains(e.relatedTarget)) {
+              mouseHeaderCell.classList.remove('drag-over');
+            }
+          });
+          
+          mouseHeaderCell.addEventListener('drop', e => {
+            if (e.dataTransfer.types.includes('text/plain') && draggedColumnId && draggedColumnId !== mouse.id) {
+              e.preventDefault();
+              mouseHeaderCell.classList.remove('drag-over');
+              
+              // Reorder columns
+              const draggedIndex = state.mouseOrder.indexOf(draggedColumnId);
+              const targetIndex = state.mouseOrder.indexOf(mouse.id);
+              
+              if (draggedIndex !== -1 && targetIndex !== -1) {
+                // Remove dragged item
+                const [draggedItem] = state.mouseOrder.splice(draggedIndex, 1);
+                // Insert at new position
+                state.mouseOrder.splice(targetIndex, 0, draggedItem);
+                
+                saveState();
+                renderMatrix();
+                renderSteps();
+              }
+            }
+          });
+        }
+        
+        // Add tooltip functionality to mouse headers
+        mouseHeaderCell.addEventListener('mouseover', showDetailTooltip);
+        mouseHeaderCell.addEventListener('mouseout', hideTooltip);
+        
+        matrixGrid.appendChild(mouseHeaderCell);
+      });
+
+      // Step rows
+      state.steps.forEach((step, stepIndex) => {
+        // Create a row wrapper
+        const rowWrapper = document.createElement('div');
+        rowWrapper.className = 'matrix-row';
+        rowWrapper.dataset.stepIndex = stepIndex;
+        
+        // Step title cell
+        const stepCell = document.createElement('div');
+        stepCell.className = 'matrix-step-cell';
+        
+        if (editMode) {
+          stepCell.classList.add('draggable', 'resizable');
+          stepCell.draggable = true;
+          
+          // Add drag handle
+          const dragHandle = document.createElement('div');
+          dragHandle.className = 'drag-handle';
+          dragHandle.innerHTML = '⋮⋮';
+          stepCell.appendChild(dragHandle);
+          
+          // Add resize handle
+          const resizeHandle = document.createElement('div');
+          resizeHandle.className = 'resize-handle';
+          stepCell.appendChild(resizeHandle);
+          
+          // Row drag events
+          stepCell.addEventListener('dragstart', e => {
+            draggedRowIndex = stepIndex;
+            rowWrapper.classList.add('dragging');
+            e.dataTransfer.effectAllowed = 'move';
+            e.dataTransfer.setData('text/html', 'row');
+          });
+          
+          stepCell.addEventListener('dragend', () => {
+            rowWrapper.classList.remove('dragging');
+            document.querySelectorAll('.matrix-row').forEach(row => {
+              row.classList.remove('drag-over');
+            });
+            draggedRowIndex = null;
+          });
+          
+          // Resize events
+          resizeHandle.addEventListener('mousedown', e => {
+            e.preventDefault();
+            const startX = e.clientX;
+            const startWidth = stepColumnWidth;
+            
+            const handleMouseMove = (e) => {
+              const newWidth = Math.max(200, startWidth + (e.clientX - startX));
+              stepColumnWidth = newWidth;
+              matrixGrid.style.setProperty('--step-column-width', `${newWidth}px`);
+              
+              // Update main content width
+              const totalWidth = stepColumnWidth + (allMice.length * 80) + 450;
+              mainContent.style.width = `${Math.max(1200, totalWidth)}px`;
+            };
+            
+            const handleMouseUp = () => {
+              document.removeEventListener('mousemove', handleMouseMove);
+              document.removeEventListener('mouseup', handleMouseUp);
+            };
+            
+            document.addEventListener('mousemove', handleMouseMove);
+            document.addEventListener('mouseup', handleMouseUp);
+          });
+        }
+        
+        // Row drop zone for reordering
+        if (editMode) {
+          stepCell.addEventListener('dragover', e => {
+            if (e.dataTransfer.types.includes('text/html')) {
+              e.preventDefault();
+              rowWrapper.classList.add('drag-over');
+            }
+          });
+          
+          stepCell.addEventListener('dragleave', e => {
+            if (!stepCell.contains(e.relatedTarget)) {
+              rowWrapper.classList.remove('drag-over');
+            }
+          });
+          
+          stepCell.addEventListener('drop', e => {
+            if (e.dataTransfer.types.includes('text/html')) {
+              e.preventDefault();
+              rowWrapper.classList.remove('drag-over');
+              
+              if (draggedRowIndex !== null && draggedRowIndex !== stepIndex) {
+                // Reorder steps
+                const draggedStep = state.steps[draggedRowIndex];
+                state.steps.splice(draggedRowIndex, 1);
+                state.steps.splice(stepIndex, 0, draggedStep);
+                saveState();
+                renderMatrix();
+                renderSteps();
+              }
+            }
+          });
+        }
+        
+        const stepTitle = document.createElement('div');
+        stepTitle.className = 'matrix-step-title';
+        stepTitle.innerHTML = step.title.replace(/\n/g, '<br>');
+        stepTitle.style.marginLeft = editMode ? '30px' : '0'; // Make room for drag handle
+        
+        if (editMode) {
+          stepTitle.contentEditable = true;
+        }
+        stepTitle.addEventListener('blur', () => {
+          if (editMode) {
+            state.steps[stepIndex].title = stepTitle.innerText;
+            saveState();
+          }
+        });
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.title = 'Delete step';
+        deleteBtn.style.display = editMode ? 'block' : 'none';
+        deleteBtn.addEventListener('click', () => deleteStep(stepIndex));
+
+        stepCell.appendChild(stepTitle);
+        stepCell.appendChild(deleteBtn);
+        matrixGrid.appendChild(stepCell);
+
+        // Assignment cells for each mouse
+        allMice.forEach(mouse => {
+          const assignmentCell = document.createElement('div');
+          assignmentCell.className = 'matrix-assignment-cell';
+          assignmentCell.dataset.stepIndex = stepIndex;
+          assignmentCell.dataset.mouseId = mouse.id;
+
+          // Add drag and drop handlers for mouse assignments
+          assignmentCell.addEventListener('dragover', e => {
+            if (!e.dataTransfer.types.includes('text/html') && !e.dataTransfer.types.includes('text/plain')) {
+              e.preventDefault();
+              assignmentCell.classList.add('drag-over');
+            }
+          });
+          assignmentCell.addEventListener('dragleave', e => {
+            if (!assignmentCell.contains(e.relatedTarget)) {
+              assignmentCell.classList.remove('drag-over');
+            }
+          });
+          assignmentCell.addEventListener('drop', e => {
+            if (!e.dataTransfer.types.includes('text/html') && !e.dataTransfer.types.includes('text/plain')) {
+              assignmentCell.classList.remove('drag-over');
+              handleMatrixDrop(e, stepIndex, mouse.id);
+            }
+          });
+
+          // Check if mouse is assigned to this step
+          if (isMouseInStep(mouse.id, stepIndex)) {
+            const indicator = document.createElement('div');
+            indicator.className = 'matrix-assignment-indicator';
+            indicator.draggable = true;
+            indicator.style.backgroundColor = mouse.color;
+            indicator.style.color = getContrastColor(mouse.color);
+            indicator.textContent = mouse.id;
+            indicator.title = `${mouse.id} assigned to step ${stepIndex + 1}`;
+
+            indicator.addEventListener('dragstart', e => {
+              e.dataTransfer.setData('application/json', JSON.stringify({
+                ...mouse,
+                fromStepIndex: stepIndex
+              }));
+            });
+
+            indicator.addEventListener('click', () => {
+              openEditPanel(mouse, indicator);
+            });
+
+            assignmentCell.appendChild(indicator);
+          }
+
+          matrixGrid.appendChild(assignmentCell);
+        });
+      });
+    }
+
+    // Handle matrix drag and drop
+    function handleMatrixDrop(e, stepIndex, targetMouseId) {
+      e.preventDefault();
+      const dragData = JSON.parse(e.dataTransfer.getData('application/json'));
+      
+      // If dropping from mouse list, toggle assignment
+      if (dragData.fromStepIndex === undefined) {
+        toggleMouseAssignment(targetMouseId, stepIndex);
+      } else {
+        // If dropping from another step, move assignment
+        moveMouseAssignment(dragData.id, dragData.fromStepIndex, stepIndex);
+      }
+    }
+
+    // Toggle mouse assignment in matrix
+    function toggleMouseAssignment(mouseId, stepIndex) {
+      if (isMouseInStep(mouseId, stepIndex)) {
+        // Remove from step
+        state.steps[stepIndex].mice = state.steps[stepIndex].mice.filter(m => m.id !== mouseId);
+        // Add back to mice list if not already there
+        const mouse = getMouseById(mouseId);
+        if (mouse && !state.mice.some(m => m.id === mouseId)) {
+          state.mice.push(mouse);
+        }
+      } else {
+        // Add to step
+        const mouse = getMouseById(mouseId);
+        if (mouse) {
+          // Remove from mice list
+          state.mice = state.mice.filter(m => m.id !== mouseId);
+          // Remove from other steps
+          state.steps.forEach(s => {
+            s.mice = s.mice.filter(m => m.id !== mouseId);
+          });
+          // Add to target step
+          state.steps[stepIndex].mice.push(mouse);
+        }
+      }
+      saveState();
+      renderMiceList();
+      renderMatrix();
+      renderSteps(); // For mobile fallback
+    }
+
+    // Move mouse assignment between steps
+    function moveMouseAssignment(mouseId, fromStepIndex, toStepIndex) {
+      if (fromStepIndex === toStepIndex) return;
+      
+      const mouse = state.steps[fromStepIndex].mice.find(m => m.id === mouseId);
+      if (mouse) {
+        // Remove from source step
+        state.steps[fromStepIndex].mice = state.steps[fromStepIndex].mice.filter(m => m.id !== mouseId);
+        // Add to target step (remove from target first if already there)
+        state.steps[toStepIndex].mice = state.steps[toStepIndex].mice.filter(m => m.id !== mouseId);
+        state.steps[toStepIndex].mice.push(mouse);
+        
+        saveState();
+        renderMiceList();
+        renderMatrix();
+        renderSteps(); // For mobile fallback
+      }
+    }
+
+    // Render mice list
+    function renderMiceList() {
+      const list = document.querySelector('.mouse-list'); 
+      list.innerHTML = '';
+      
+      if (state.mice.length === 0) {
+        const emptyMsg = document.createElement('div');
+        emptyMsg.className = 'empty-message';
+        emptyMsg.textContent = 'No mice in list (all assigned or none added)';
+        list.appendChild(emptyMsg);
+      } else {
+        state.mice.forEach(mouse => list.appendChild(createMouseCard(mouse)));
+      }
+    }
+
+    // Fallback: Render original steps layout for mobile
+    function renderSteps() {
+      const stepsEl = document.querySelector('.steps-grid'); 
+      if (!stepsEl) return;
+      
+      stepsEl.innerHTML = '';
+      state.steps.forEach((step, idx) => {
+        const stepEl = document.createElement('div'); 
+        stepEl.className = 'step-card'; 
+        stepEl.dataset.step = idx;
+        
+        const header = document.createElement('div');
+        header.className = 'step-header';
+        header.style.display = 'flex';
+        header.style.justifyContent = 'space-between';
+        header.style.alignItems = 'flex-start';
+        
+        const title = document.createElement('div'); 
+        if (editMode) {
+          title.contentEditable = true;
+          title.style.border = '2px dashed #667eea';
+          title.style.padding = '8px';
+          title.style.borderRadius = '8px';
+        } else {
+          title.contentEditable = false;
+          title.style.border = 'none';
+          title.style.padding = '0';
+        }
+        title.innerHTML = step.title.replace(/\n/g, '<br>');
+        title.style.flex = '1';
+        title.style.margin = '0';
+        title.style.fontSize = '1.1rem';
+        title.style.fontWeight = '600';
+        title.style.whiteSpace = 'pre-wrap';
+        title.addEventListener('blur', () => { 
+          if (editMode) {
+            state.steps[idx].title = title.innerText; 
+            saveState(); 
+          }
+        });
+        
+        const deleteBtn = document.createElement('button');
+        deleteBtn.className = 'delete-btn';
+        deleteBtn.innerHTML = '×';
+        deleteBtn.title = 'Delete step';
+        deleteBtn.style.display = editMode ? 'block' : 'none';
+        deleteBtn.addEventListener('click', () => deleteStep(idx));
+        
+        header.appendChild(title);
+        header.appendChild(deleteBtn);
+        
+        const drop = document.createElement('div'); 
+        drop.className = 'dropzone';
+        drop.style.minHeight = '80px';
+        drop.style.border = '2px dashed #e1e8ed';
+        drop.style.borderRadius = '12px';
+        drop.style.padding = '15px';
+        drop.style.transition = 'all 0.3s ease';
+        drop.style.background = '#fafbfc';
+        drop.style.display = 'flex';
+        drop.style.flexDirection = 'column';
+        drop.style.gap = '8px';
+        
+        drop.addEventListener('dragover', e => { 
+          e.preventDefault(); 
+          drop.classList.add('drag-over'); 
+          drop.style.borderColor = '#667eea';
+          drop.style.background = 'linear-gradient(135deg, #f8f9ff 0%, #e8f2ff 100%)';
+          drop.style.transform = 'scale(1.02)';
+        });
+        drop.addEventListener('dragleave', e => { 
+          if (!drop.contains(e.relatedTarget)) {
+            drop.classList.remove('drag-over');
+            drop.style.borderColor = '#e1e8ed';
+            drop.style.background = '#fafbfc';
+            drop.style.transform = 'scale(1)';
+          }
+        });
+        drop.addEventListener('drop', e => { 
+          drop.classList.remove('drag-over'); 
+          drop.style.borderColor = '#e1e8ed';
+          drop.style.background = '#fafbfc';
+          drop.style.transform = 'scale(1)';
+          handleDrop(e, idx); 
+        });
+        
+        if (step.mice.length === 0) {
+          const emptyMsg = document.createElement('div');
+          emptyMsg.className = 'empty-message';
+          emptyMsg.textContent = 'Drag mice here';
+          drop.appendChild(emptyMsg);
+        } else {
+          step.mice.forEach(mouse => drop.appendChild(createAssignedTag(mouse, idx)));
+        }
+        stepEl.append(header, drop); 
+        stepsEl.appendChild(stepEl);
+      });
+    }
+
+    // Delete step
+    function deleteStep(stepIdx) {
+      if (!editMode) {
+        alert('Please enable edit mode first');
+        return;
+      }
+      
+      if (state.steps[stepIdx].mice.length > 0) {
+        if (!confirm('This step contains mice. Are you sure you want to delete it?')) {
+          return;
+        }
+      }
+      
+      // Move mice back to the list
+      const miceInStep = [...state.steps[stepIdx].mice];
+      miceInStep.forEach(mouse => {
+        if (!state.mice.some(m => m.id === mouse.id)) {
+          state.mice.push(mouse);
+        }
+      });
+      
+      state.steps.splice(stepIdx, 1);
+      saveState(); 
+      renderMiceList(); 
+      renderMatrix();
+      renderSteps();
+    }
+
+    // Add new mouse
+    document.getElementById('add-mouse-form').addEventListener('submit', e => {
+      e.preventDefault();
+      const id = document.getElementById('mouse-id').value.trim();
+      const sessionsInput = document.getElementById('mouse-sessions').value.trim();
+      const sessions = sessionsInput === '' ? '' : parseInt(sessionsInput, 10);
+      
+      if (!id) {
+        alert('Please enter a valid mouse ID');
+        return;
+      }
+      
+      if (sessionsInput !== '' && (isNaN(sessions) || sessions < 0)) {
+        alert('Please enter a valid positive session count or leave it empty');
+        return;
+      }
+      
+      // Check if mouse ID already exists anywhere
+      const allMice = getAllMice();
+      if (allMice.some(mouse => mouse.id === id)) {
+        alert('Mouse ID already exists');
+        return;
+      }
+      
+      state.mice.push({ id, sessions, color: selectedColor });
+      saveState(); 
+      renderMiceList();
+      renderMatrix();
+      renderSteps();
+      e.target.reset(); 
+      selectedColor = defaultColors[0];
+      renderColorOptions(document.getElementById('color-options'), col=>{});
+    });
+
+    // Create mouse card
+    function createMouseCard(mouse) {
+      const card = document.createElement('div'); 
+      card.className = 'mouse-card'; 
+      card.draggable = true;
+      card.dataset.id = mouse.id; 
+      card.dataset.sessions = mouse.sessions; 
+      card.style.backgroundColor = mouse.color;
+      card.style.color = getContrastColor(mouse.color);
+      
+      const info = document.createElement('div');
+      const sessionsText = mouse.sessions === '' ? '' : ` (${mouse.sessions} sessions)`;
+      info.innerHTML = `<span class="mouse-id">${mouse.id}</span>` +
+                       `<span class="mouse-sessions">${sessionsText}</span>`;
+      
+      const controls = document.createElement('div');
+      controls.style.display = 'flex';
+      controls.style.alignItems = 'center';
+      
+      const colorBtn = document.createElement('div');
+      colorBtn.className = 'color-display';
+      colorBtn.style.backgroundColor = mouse.color;
+      colorBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        openEditPanel(mouse, card); 
+      });
+      
+      const deleteBtn = document.createElement('button');
+      deleteBtn.className = 'delete-btn';
+      deleteBtn.innerHTML = '×';
+      deleteBtn.title = 'Delete mouse';
+      deleteBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        deleteMouse(mouse.id); 
+      });
+      
+      controls.appendChild(colorBtn);
+      controls.appendChild(deleteBtn);
+      
+      card.appendChild(info);
+      card.appendChild(controls);
+      
+      card.addEventListener('dragstart', e => {
+        e.dataTransfer.setData('application/json', JSON.stringify(mouse));
+      });
+      card.addEventListener('mouseover', showDetailTooltip);
+      card.addEventListener('mouseout', hideTooltip);
+      return card;
+    }
+
+    // Create assigned tag (for mobile fallback)
+    function createAssignedTag(mouse, stepIdx) {
+      const tag = document.createElement('div'); 
+      tag.className = 'assigned-mouse'; 
+      tag.draggable = true;
+      tag.dataset.id = mouse.id; 
+      tag.dataset.sessions = mouse.sessions; 
+      tag.style.backgroundColor = mouse.color;
+      tag.style.color = getContrastColor(mouse.color);
+      tag.style.background = 'white';
+      tag.style.padding = '15px';
+      tag.style.borderRadius = '12px';
+      tag.style.boxShadow = '0 3px 15px rgba(0,0,0,0.08)';
+      tag.style.transition = 'all 0.3s ease';
+      tag.style.display = 'flex';
+      tag.style.alignItems = 'center';
+      tag.style.justifyContent = 'space-between';
+      tag.style.border = '2px solid transparent';
+      tag.style.position = 'relative';
+      tag.style.overflow = 'hidden';
+      tag.style.cursor = 'default';
+      
+      const info = document.createElement('div');
+      const sessionsText = mouse.sessions === '' ? '' : ` (${mouse.sessions} sessions)`;
+      info.innerHTML = `<span class="mouse-id">${mouse.id}</span>` +
+                      `<span class="mouse-sessions">${sessionsText}</span>`;
+      
+      const controls = document.createElement('div');
+      controls.style.display = 'flex';
+      controls.style.alignItems = 'center';
+      
+      const editBtn = document.createElement('button');
+      editBtn.innerHTML = '✏️';
+      editBtn.title = 'Edit mouse info';
+      editBtn.style.background = 'transparent';
+      editBtn.style.border = 'none';
+      editBtn.style.cursor = 'pointer';
+      editBtn.style.fontSize = '16px';
+      editBtn.style.padding = '4px';
+      editBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        openEditPanel(mouse, tag); 
+      });
+      
+      const colorBtn = document.createElement('div');
+      colorBtn.className = 'color-display';
+      colorBtn.style.backgroundColor = mouse.color;
+      colorBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        openEditPanel(mouse, tag); 
+      });
+      
+      const removeBtn = document.createElement('button');
+      removeBtn.className = 'delete-btn';
+      removeBtn.innerHTML = '×';
+      removeBtn.title = 'Remove from step';
+      removeBtn.addEventListener('click', (e) => { 
+        e.stopPropagation(); 
+        removeFromStep(mouse.id, stepIdx); 
+      });
+      
+      controls.appendChild(editBtn);
+      controls.appendChild(colorBtn);
+      controls.appendChild(removeBtn);
+      
+      tag.appendChild(info);
+      tag.appendChild(controls);
+      
+      tag.addEventListener('dragstart', e => {
+        e.stopPropagation();
+        e.dataTransfer.setData('application/json', JSON.stringify({
+          ...mouse,
+          fromStepIndex: stepIdx
+        }));
+      });
+      tag.addEventListener('mouseover', showDetailTooltip);
+      tag.addEventListener('mouseout', hideTooltip);
+      return tag;
+    }
+
+    // Original drag & drop logic for mobile fallback
+    function handleDrop(e, stepIdx) {
+      e.preventDefault();
+      const mouse = JSON.parse(e.dataTransfer.getData('application/json'));
+      // remove from list or previous step
+      state.mice = state.mice.filter(m => m.id !== mouse.id);
+      state.steps.forEach(s => s.mice = s.mice.filter(m => m.id !== mouse.id));
+      // add to new step
+      state.steps[stepIdx].mice.push(mouse);
+      saveState(); 
+      renderMiceList(); 
+      renderMatrix(); 
+      renderSteps();
+    }
+
+    // Delete mouse
+    function deleteMouse(mouseId) {
+      if (confirm('Are you sure you want to delete this mouse?')) {
+        state.mice = state.mice.filter(m => m.id !== mouseId);
+        state.steps.forEach(s => s.mice = s.mice.filter(m => m.id !== mouseId));
+        // Remove from mouse order
+        state.mouseOrder = state.mouseOrder.filter(id => id !== mouseId);
+        saveState(); 
+        renderMiceList(); 
+        renderMatrix(); 
+        renderSteps();
+      }
+    }
+
+    // Remove from step
+    function removeFromStep(mouseId, stepIdx) {
+      const mouse = state.steps[stepIdx].mice.find(m => m.id === mouseId);
+      state.steps[stepIdx].mice = state.steps[stepIdx].mice.filter(m => m.id !== mouseId);
+      
+      // Add back to mice list if not already there
+      if (mouse && !state.mice.some(m => m.id === mouseId)) {
+        state.mice.push(mouse);
+      }
+      
+      saveState(); 
+      renderMiceList(); 
+      renderMatrix(); 
+      renderSteps();
+    }
+
+    // Calculate contrast color for text readability
+    function getContrastColor(hexColor) {
+      // Convert hex to RGB
+      const r = parseInt(hexColor.slice(1, 3), 16);
+      const g = parseInt(hexColor.slice(3, 5), 16);
+      const b = parseInt(hexColor.slice(5, 7), 16);
+      
+      // Calculate luminance
+      const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+      
+      // Return black or white based on luminance
+      return luminance > 0.5 ? '#000000' : '#ffffff';
+    }
+
+    // Edit panel
+    function openEditPanel(mouse, anchor) {
+      closeEditPanel();
+      const panel = document.createElement('div'); 
+      panel.className = 'edit-panel';
+      panel.innerHTML = `
+        <h3>Edit Mouse Info</h3>
+        <div class="form-group">
+          <label>Mouse ID:</label>
+          <input id="edit-id" value="${mouse.id}" maxlength="20">
+        </div>
+        <div class="form-group">
+          <label>Sessions (Optional):</label>
+          <input id="edit-sessions" type="number" value="${mouse.sessions}" min="0" max="999" placeholder="Leave empty if not applicable">
+        </div>
+        <div class="form-group">
+          <label>Color:</label>
+          <div id="edit-colors" class="color-options"></div>
+        </div>
+        <div class="button-group">
+          <button id="save-btn">Save</button>
+          <button id="cancel-btn">Cancel</button>
+        </div>
+      `;
+      document.body.appendChild(panel);
+      
+      renderColorOptions(panel.querySelector('#edit-colors'), col => selectedColor = col);
+      panel.querySelectorAll('.color-option').forEach(div => {
+        if (div.style.backgroundColor === mouse.color) div.classList.add('selected');
+      });
+      
+      panel.querySelector('#save-btn').addEventListener('click', () => {
+        const newId = panel.querySelector('#edit-id').value.trim();
+        const sessionsInput = panel.querySelector('#edit-sessions').value.trim();
+        const newSess = sessionsInput === '' ? '' : parseInt(sessionsInput, 10);
+        const newColor = selectedColor;
+        
+        if (!newId) {
+          alert('Please enter a valid Mouse ID');
+          return;
+        }
+        
+        if (sessionsInput !== '' && (isNaN(newSess) || newSess < 0)) {
+          alert('Please enter a valid positive session count or leave it empty');
+          return;
+        }
+        
+        // Check if new ID conflicts with existing mice
+        const allMice = getAllMice();
+        if (newId !== mouse.id && allMice.some(m => m.id === newId)) {
+          alert('Mouse ID already exists');
+          return;
+        }
+        
+        // update state
+        state.mice.forEach(m => { 
+          if (m.id === mouse.id) { 
+            m.id = newId; 
+            m.sessions = newSess; 
+            m.color = newColor; 
+          }
+        });
+        state.steps.forEach(s => s.mice.forEach(m => { 
+          if (m.id === mouse.id) { 
+            m.id = newId; 
+            m.sessions = newSess; 
+            m.color = newColor; 
+          }
+        }));
+        // Update mouse order if ID changed
+        if (mouse.id !== newId) {
+          const orderIndex = state.mouseOrder.indexOf(mouse.id);
+          if (orderIndex !== -1) {
+            state.mouseOrder[orderIndex] = newId;
+          }
+        }
+        saveState(); 
+        renderMiceList(); 
+        renderMatrix(); 
+        renderSteps(); 
+        closeEditPanel();
+      });
+      panel.querySelector('#cancel-btn').addEventListener('click', closeEditPanel);
+    }
+    function closeEditPanel() { 
+      document.querySelectorAll('.edit-panel').forEach(el => el.remove()); 
+    }
+
+    // Tooltip
+    const tooltip = document.getElementById('tooltip');
+    function showDetailTooltip(e) {
+      const el = e.currentTarget;
+      const isMatrix = el.classList.contains('matrix-assignment-indicator');
+      const isAssigned = el.classList.contains('assigned-mouse') || isMatrix;
+      const isMouseHeader = el.classList.contains('mouse-header');
+      let tooltipContent = `ID: ${el.dataset.id || el.textContent}<br>Sessions: ${el.dataset.sessions || 'N/A'}`;
+      
+      if (isMouseHeader && editMode) {
+        tooltipContent = `Mouse: ${el.textContent}<br><small>Drag column header to reorder mice columns</small>`;
+      } else if (isMatrix) {
+        tooltipContent += '<br><small>Click to edit • Drag to move between steps</small>';
+      } else if (isAssigned) {
+        tooltipContent += '<br><small>✏️ Click edit button to modify<br>Use × button to remove<br>Drag to other steps</small>';
+      } else {
+        tooltipContent += '<br><small>Drag to training steps to assign</small>';
+      }
+      
+      tooltip.innerHTML = tooltipContent;
+      tooltip.style.display = 'block';
+    }
+    function hideTooltip() { 
+      tooltip.style.display = 'none'; 
+    }
+    document.addEventListener('mousemove', e => {
+      if (tooltip.style.display === 'block') {
+        tooltip.style.left = (e.pageX + 10) + 'px'; 
+        tooltip.style.top = (e.pageY + 10) + 'px';
+      }
+    });
+
+    // Edit mode toggle
+    document.getElementById('edit-mode-btn').addEventListener('click', () => {
+      editMode = !editMode;
+      const btn = document.getElementById('edit-mode-btn');
+      const addStepDiv = document.getElementById('add-step-form');
+      
+      if (editMode) {
+        btn.textContent = 'Save';
+        btn.style.backgroundColor = '#ff6b6b';
+        addStepDiv.style.display = 'block';
+      } else {
+        btn.textContent = 'Enable Edit Mode';
+        btn.style.backgroundColor = '';
+        addStepDiv.style.display = 'none';
+      }
+      
+      renderMatrix();
+      renderSteps();
+    });
+
+    // Adding new step
+    document.getElementById('add-step-button').addEventListener('click', () => {
+      if (!editMode) {
+        alert('Please enable edit mode first');
+        return;
+      }
+      const desc = document.getElementById('new-step-description').value.trim(); 
+      if (!desc) {
+        alert('Please enter a step description');
+        return;
+      }
+      state.steps.push({ title: `${state.steps.length}. ${desc}`, mice: [] }); 
+      saveState(); 
+      renderMatrix(); 
+      renderSteps(); 
+      document.getElementById('new-step-description').value = '';
+    });
+
+    // Allow Enter key to add step
+    document.getElementById('new-step-description').addEventListener('keypress', (e) => {
+      if (e.key === 'Enter') {
+        document.getElementById('add-step-button').click();
+      }
+    });
+
+    // Import/export
+    document.getElementById('export-btn').addEventListener('click', () => {
+      const dataStr = JSON.stringify(state, null, 2);
+      const blob = new Blob([dataStr], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a'); 
+      a.href = url; 
+      a.download = 'mouseTrainingData.json'; 
+      a.click(); 
+      URL.revokeObjectURL(url);
+    });
+    
+    // Backup from server
+    document.getElementById('backup-btn').addEventListener('click', () => {
+      window.location.href = '/api/backup';
+    });
+    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
+    document.getElementById('import-file').addEventListener('change', e => {
+      const file = e.target.files[0]; 
+      if (!file) return;
+      const reader = new FileReader(); 
+      reader.onload = () => {
+        try {
+          const newState = JSON.parse(reader.result);
+          if (confirm('Overwrite existing data? OK to overwrite, Cancel to append.')) {
+            state = newState;
+            // Ensure mouseOrder exists for backward compatibility
+            if (!state.mouseOrder) {
+              const allMice = [...state.mice];
+              state.steps.forEach(step => {
+                step.mice.forEach(mouse => {
+                  if (!allMice.some(m => m.id === mouse.id)) {
+                    allMice.push(mouse);
+                  }
+                });
+              });
+              state.mouseOrder = allMice.map(m => m.id).sort();
+            }
+          } else { 
+            state.mice = state.mice.concat(newState.mice || []); 
+            state.steps = state.steps.concat(newState.steps || []);
+            // Merge mouse order
+            if (newState.mouseOrder) {
+              newState.mouseOrder.forEach(mouseId => {
+                if (!state.mouseOrder.includes(mouseId)) {
+                  state.mouseOrder.push(mouseId);
+                }
+              });
+            }
+          }
+          saveState(); 
+          renderMiceList(); 
+          renderMatrix(); 
+          renderSteps();
+        } catch { 
+          alert('Invalid JSON'); 
+        }
+      };
+      reader.readAsText(file);
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', async () => {
+      renderColorOptions(document.getElementById('color-options'), col => {});
+      
+      // Load state first, then render
+      await loadState();
+      renderMiceList(); 
+      renderMatrix(); 
+      renderSteps();
+      
+      // Add window resize listener for responsive layout
+      window.addEventListener('resize', () => {
+        updateStepColumnWidth();
+      });
+    });
+    
+    // Also update on window load to ensure proper initial sizing
+    window.addEventListener('load', () => {
+      updateStepColumnWidth();
+    });
+  </script>
+</body>
+</html>
