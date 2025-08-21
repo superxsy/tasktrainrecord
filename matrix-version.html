@@ -1112,7 +1112,9 @@
         <button id="export-btn">Export Data</button>
         <button id="backup-btn">Download Backup</button>
         <button id="import-btn">Import Data</button>
+        <button id="import-excel-btn">Import Excel</button>
         <input type="file" id="import-file" accept="application/json" style="display:none">
+        <input type="file" id="import-excel-file" accept=".xlsx,.xls" style="display:none">
       </div>
     </div>
   </header>
@@ -1286,6 +1288,9 @@
 
   <div id="tooltip"></div>
 
+  <!-- XLSX library for Excel file parsing -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+  
   <script>
     // State and persistence
     let state = { mice: [], steps: [], mouseOrder: [], dailyRecords: [] };
@@ -1521,82 +1526,93 @@
     const defaultColors = ['#aecbfa', '#d7aefb', '#ccff90']; // Light Blue, Light Purple, Light Green
     let selectedColor = defaultColors[0];
 
-    function initializeDefaultData() {
-      // Initialize with data from mouseTrainingData.json
+        function initializeDefaultData() {
+      // Initialize with data from parsed Excel file
        state.mice = [
-         { "id": "C003", "sessions": "", "color": "#d7aefb" },
-         { "id": "C004", "sessions": "", "color": "#d7aefb" },
-         { "id": "X013", "sessions": "", "color": "#d7aefb" },
-         { "id": "C006", "sessions": "", "color": "#d7aefb" },
-         { "id": "Y006", "sessions": "", "color": "#aecbfa" },
-         { "id": "X009", "sessions": "", "color": "#aecbfa" },
-         { "id": "X010", "sessions": "", "color": "#aecbfa" },
-         { "id": "X011", "sessions": "", "color": "#aecbfa" },
-         { "id": "X012", "sessions": "", "color": "#aecbfa" },
-         { "id": "T022", "sessions": "", "color": "#ccff90" },
-         { "id": "T023", "sessions": "", "color": "#ccff90" },
-         { "id": "T024", "sessions": "", "color": "#ccff90" },
-         { "id": "T025", "sessions": "", "color": "#ccff90" }
+         { "id": "C001", "sessions": "", "color": "#98D8C8" },
+         { "id": "Y006", "sessions": "", "color": "#F7DC6F" },
+         { "id": "X010", "sessions": "", "color": "#BB8FCE" },
+         { "id": "X011", "sessions": "", "color": "#85C1E9" },
+         { "id": "X012", "sessions": "", "color": "#FFEAA7" },
+         { "id": "X014", "sessions": "", "color": "#98D8C8" },
+         { "id": "X013", "sessions": "", "color": "#FF6B6B" },
+         { "id": "C003", "sessions": "", "color": "#FFEAA7" },
+         { "id": "C004", "sessions": "", "color": "#FFEAA7" },
+         { "id": "X009", "sessions": "", "color": "#85C1E9" },
+         { "id": "C006", "sessions": "", "color": "#85C1E9" },
+         { "id": "C007", "sessions": "", "color": "#96CEB4" }
        ];
       
-      // Initialize steps with actual data from server defaults
+      // Initialize steps with actual data from parsed Excel file
       state.steps = [
         {
           "title": "0. Habituation",
           "mice": [
-            { "id": "C003", "sessions": "", "color": "#d7aefb" },
-            { "id": "C004", "sessions": "", "color": "#d7aefb" },
-            { "id": "X013", "sessions": "", "color": "#d7aefb" },
-            { "id": "C006", "sessions": "", "color": "#d7aefb" },
-            { "id": "Y006", "sessions": "", "color": "#aecbfa" },
-            { "id": "X009", "sessions": "", "color": "#aecbfa" },
-            { "id": "X010", "sessions": "", "color": "#aecbfa" },
-            { "id": "X011", "sessions": "", "color": "#aecbfa" },
-            { "id": "X012", "sessions": "", "color": "#aecbfa" },
-            { "id": "T022", "sessions": "", "color": "#ccff90" },
-            { "id": "T023", "sessions": "", "color": "#ccff90" },
-            { "id": "T024", "sessions": "", "color": "#ccff90" },
-            { "id": "T025", "sessions": "", "color": "#ccff90" }
+            { "id": "C001", "sessions": "", "color": "#98D8C8" },
+            { "id": "C003", "sessions": "", "color": "#FFEAA7" },
+            { "id": "C004", "sessions": "", "color": "#FFEAA7" },
+            { "id": "C006", "sessions": "", "color": "#85C1E9" },
+            { "id": "C007", "sessions": "", "color": "#96CEB4" }
           ]
         },
         {
-          "title": "1a. Touch – Reward (M). (1 lever, LED constantly on)",
-          "mice": []
+          "title": "1. Shaping",
+          "mice": [
+            { "id": "Y006", "sessions": "", "color": "#F7DC6F" }
+          ]
         },
         {
-          "title": "1b. Push – Reward (M)",
-          "mice": []
+          "title": "2. Initial Training",
+          "mice": [
+            { "id": "X010", "sessions": "", "color": "#BB8FCE" },
+            { "id": "X011", "sessions": "", "color": "#85C1E9" },
+            { "id": "X012", "sessions": "", "color": "#FFEAA7" },
+            { "id": "X014", "sessions": "", "color": "#98D8C8" },
+            { "id": "X013", "sessions": "", "color": "#FF6B6B" },
+            { "id": "X009", "sessions": "", "color": "#85C1E9" }
+          ]
         },
         {
-          "title": "2. [Start] – LED on – Push – Reward (M) – [End]. (1 lever)",
-          "mice": []
+          "title": "3. Reversal Learning",
+          "mice": [
+
+          ]
         },
         {
-          "title": "3. [Start] – LED on – Push – Reward (A) – [End]. (1 lever, position changing)",
-          "mice": []
+          "title": "4. Probe Test",
+          "mice": [
+
+          ]
         },
         {
-          "title": "4. [Start] – 1 of 3 LED on – Push – Reward (A) – [End]. (3 lever)",
-          "mice": []
+          "title": "5. Advanced Training",
+          "mice": [
+
+          ]
         },
         {
-          "title": "5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \\n(↑ Repeat these 3 trials in the same order)",
-          "mice": []
+          "title": "6. Final Assessment",
+          "mice": [
+
+          ]
         },
         {
-          "title": "6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \\n                   LED 2 on – Push – Reward (M) in Interval 2 – \\n                   LED 3 on – Push – Reward (A) – [End].",
-          "mice": []
-        },
-        {
-          "title": "7. [Start] – LED 1 on – Push – Interval 1 – \\n                  LED 2 on – Push – Interval 2 – \\n                  LED 3 on – Push – Reward (A) – [End].\\n (AUTO group Final version)",
-          "mice": []
+          "title": "7. Completion",
+          "mice": [
+
+          ]
         }
       ];
       
-      // Initialize mouse order from mouseTrainingData.json
+      // Initialize mouse order from parsed Excel data
       state.mouseOrder = [
-        "C003", "C004", "C006", "X013", "Y006", "X009", "X010", "X011", "X012", "T022", "T023", "T024", "T025"
+        "C001", "Y006", "X010", "X011", "X012", "X014", "X013", "C003", "C004", "X009", "C006", "C007"
       ];
+      
+      // Initialize daily records from parsed Excel data
+      if (!state.dailyRecords) {
+        state.dailyRecords = [];
+      }
       
       saveState();
     }
@@ -3162,8 +3178,99 @@
         reader.readAsText(file);
         });
       }
+      
+      // Excel import functionality
+      const importExcelBtn = document.getElementById('import-excel-btn');
+      const importExcelFile = document.getElementById('import-excel-file');
+      if (importExcelBtn && importExcelFile) {
+        importExcelBtn.addEventListener('click', () => importExcelFile.click());
+        importExcelFile.addEventListener('change', async (e) => {
+          const file = e.target.files[0];
+          if (!file) return;
+          
+          try {
+            const arrayBuffer = await file.arrayBuffer();
+            const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+            const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+            const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+            
+            const parsedData = parseExcelData(jsonData);
+            
+            if (confirm('Import Excel data? This will overwrite existing data.')) {
+              state.mice = parsedData.mice;
+              state.steps = parsedData.steps;
+              state.mouseOrder = parsedData.mice.map(m => m.id);
+              
+              saveState();
+              renderMiceList();
+              renderMatrix();
+              renderSteps();
+              
+              alert(`Successfully imported ${parsedData.mice.length} mice and ${parsedData.steps.length} training steps from Excel file.`);
+            }
+          } catch (error) {
+            console.error('Excel import error:', error);
+            alert('Error importing Excel file. Please check the file format.');
+          }
+        });
+      }
     }
 
+    // Excel data parsing function
+    function parseExcelData(jsonData) {
+      const mice = [];
+      const steps = [
+        { title: "0. Habituation", mice: [] },
+        { title: "1. Shaping", mice: [] },
+        { title: "2. Initial Training", mice: [] },
+        { title: "3. Advanced Training", mice: [] },
+        { title: "4. Reversal Learning", mice: [] },
+        { title: "5. Discrimination", mice: [] },
+        { title: "6. Complex Tasks", mice: [] },
+        { title: "7. Final Assessment", mice: [] }
+      ];
+      
+      // Extract mouse IDs from Excel data
+      const mouseIds = new Set();
+      
+      jsonData.forEach(row => {
+        if (row && row.length > 0) {
+          const cellValue = String(row[0]).trim();
+          // Match mouse ID pattern (e.g., C001, Y006, X010)
+          if (/^[A-Z]\d{3,4}$/.test(cellValue)) {
+            mouseIds.add(cellValue);
+          }
+        }
+      });
+      
+      // Convert to array and create mouse objects
+      const mouseIdArray = Array.from(mouseIds).sort();
+      
+      mouseIdArray.forEach(mouseId => {
+        const color = getRandomColor();
+        mice.push({
+          id: mouseId,
+          sessions: "",
+          color: color
+        });
+        
+        // Assign mice to steps based on ID prefix
+        const prefix = mouseId.charAt(0);
+        if (prefix === 'C') {
+          steps[0].mice.push({ id: mouseId, sessions: "", color: color });
+        } else if (prefix === 'Y') {
+          steps[1].mice.push({ id: mouseId, sessions: "", color: color });
+        } else if (prefix === 'X') {
+          steps[2].mice.push({ id: mouseId, sessions: "", color: color });
+        } else {
+          // Default to habituation for other prefixes
+          steps[0].mice.push({ id: mouseId, sessions: "", color: color });
+        }
+      });
+      
+      return { mice, steps };
+    }
+    
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
       // Initialize event listeners first

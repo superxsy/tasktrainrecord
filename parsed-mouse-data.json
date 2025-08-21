@@ -1,0 +1,245 @@
+{
+  "mice": [
+    {
+      "id": "C001",
+      "color": "#98D8C8",
+      "sessionCount": 1
+    },
+    {
+      "id": "Y006",
+      "color": "#F7DC6F",
+      "sessionCount": 1
+    },
+    {
+      "id": "X010",
+      "color": "#BB8FCE",
+      "sessionCount": 1
+    },
+    {
+      "id": "X011",
+      "color": "#85C1E9",
+      "sessionCount": 1
+    },
+    {
+      "id": "X012",
+      "color": "#FFEAA7",
+      "sessionCount": 1
+    },
+    {
+      "id": "X014",
+      "color": "#98D8C8",
+      "sessionCount": 1
+    },
+    {
+      "id": "X013",
+      "color": "#FF6B6B",
+      "sessionCount": 1
+    },
+    {
+      "id": "C003",
+      "color": "#FFEAA7",
+      "sessionCount": 1
+    },
+    {
+      "id": "C004",
+      "color": "#FFEAA7",
+      "sessionCount": 1
+    },
+    {
+      "id": "X009",
+      "color": "#85C1E9",
+      "sessionCount": 1
+    },
+    {
+      "id": "C006",
+      "color": "#85C1E9",
+      "sessionCount": 1
+    },
+    {
+      "id": "C007",
+      "color": "#96CEB4",
+      "sessionCount": 1
+    }
+  ],
+  "steps": [
+    {
+      "id": "step-0",
+      "title": "0. Habituation",
+      "mice": [
+        "C001",
+        "C003",
+        "C004",
+        "C006",
+        "C007"
+      ]
+    },
+    {
+      "id": "step-1",
+      "title": "1. Shaping",
+      "mice": [
+        "Y006"
+      ]
+    },
+    {
+      "id": "step-2",
+      "title": "2. Initial Training",
+      "mice": [
+        "X010",
+        "X011",
+        "X012",
+        "X014",
+        "X013",
+        "X009"
+      ]
+    },
+    {
+      "id": "step-3",
+      "title": "3. Reversal Learning",
+      "mice": []
+    },
+    {
+      "id": "step-4",
+      "title": "4. Probe Test",
+      "mice": []
+    },
+    {
+      "id": "step-5",
+      "title": "5. Advanced Training",
+      "mice": []
+    },
+    {
+      "id": "step-6",
+      "title": "6. Final Assessment",
+      "mice": []
+    },
+    {
+      "id": "step-7",
+      "title": "7. Completion",
+      "mice": []
+    }
+  ],
+  "records": [
+    {
+      "id": "record-C001-1755756285642-0",
+      "mouseId": "C001",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "0. Habituation",
+      "performance": "Good",
+      "notes": "从Excel导入的C001数据"
+    },
+    {
+      "id": "record-Y006-1755756285643-1",
+      "mouseId": "Y006",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "1. Shaping",
+      "performance": "Good",
+      "notes": "从Excel导入的Y006数据"
+    },
+    {
+      "id": "record-X010-1755756285643-2",
+      "mouseId": "X010",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "2. Initial Training",
+      "performance": "Good",
+      "notes": "从Excel导入的X010数据"
+    },
+    {
+      "id": "record-X011-1755756285643-3",
+      "mouseId": "X011",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "2. Initial Training",
+      "performance": "Good",
+      "notes": "从Excel导入的X011数据"
+    },
+    {
+      "id": "record-X012-1755756285643-4",
+      "mouseId": "X012",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "2. Initial Training",
+      "performance": "Good",
+      "notes": "从Excel导入的X012数据"
+    },
+    {
+      "id": "record-X014-1755756285643-5",
+      "mouseId": "X014",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "2. Initial Training",
+      "performance": "Good",
+      "notes": "从Excel导入的X014数据"
+    },
+    {
+      "id": "record-X013-1755756285643-6",
+      "mouseId": "X013",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "2. Initial Training",
+      "performance": "Good",
+      "notes": "从Excel导入的X013数据"
+    },
+    {
+      "id": "record-C003-1755756285643-7",
+      "mouseId": "C003",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "0. Habituation",
+      "performance": "Good",
+      "notes": "从Excel导入的C003数据"
+    },
+    {
+      "id": "record-C004-1755756285643-8",
+      "mouseId": "C004",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "0. Habituation",
+      "performance": "Good",
+      "notes": "从Excel导入的C004数据"
+    },
+    {
+      "id": "record-X009-1755756285643-9",
+      "mouseId": "X009",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "2. Initial Training",
+      "performance": "Good",
+      "notes": "从Excel导入的X009数据"
+    },
+    {
+      "id": "record-C006-1755756285643-10",
+      "mouseId": "C006",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "0. Habituation",
+      "performance": "Good",
+      "notes": "从Excel导入的C006数据"
+    },
+    {
+      "id": "record-C007-1755756285643-11",
+      "mouseId": "C007",
+      "date": "2025-08-21",
+      "session": 1,
+      "step": "0. Habituation",
+      "performance": "Good",
+      "notes": "从Excel导入的C007数据"
+    }
+  ],
+  "mouseOrder": [
+    "C001",
+    "Y006",
+    "X010",
+    "X011",
+    "X012",
+    "X014",
+    "X013",
+    "C003",
+    "C004",
+    "X009",
+    "C006",
+    "C007"
+  ]
+}
