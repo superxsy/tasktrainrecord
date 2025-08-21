@@ -1,5 +1,71 @@
 {
-  "mice": [],
+  "mice": [
+    {
+      "id": "C003",
+      "sessions": "",
+      "color": "#d7aefb"
+    },
+    {
+      "id": "C004",
+      "sessions": "",
+      "color": "#d7aefb"
+    },
+    {
+      "id": "X013",
+      "sessions": "",
+      "color": "#d7aefb"
+    },
+    {
+      "id": "C006",
+      "sessions": "",
+      "color": "#d7aefb"
+    },
+    {
+      "id": "Y006",
+      "sessions": "",
+      "color": "#aecbfa"
+    },
+    {
+      "id": "X009",
+      "sessions": "",
+      "color": "#aecbfa"
+    },
+    {
+      "id": "X010",
+      "sessions": "",
+      "color": "#aecbfa"
+    },
+    {
+      "id": "X011",
+      "sessions": "",
+      "color": "#aecbfa"
+    },
+    {
+      "id": "X012",
+      "sessions": "",
+      "color": "#aecbfa"
+    },
+    {
+      "id": "T022",
+      "sessions": "",
+      "color": "#ccff90"
+    },
+    {
+      "id": "T023",
+      "sessions": "",
+      "color": "#ccff90"
+    },
+    {
+      "id": "T024",
+      "sessions": "",
+      "color": "#ccff90"
+    },
+    {
+      "id": "T025",
+      "sessions": "",
+      "color": "#ccff90"
+    }
+  ],
   "steps": [
     {
       "title": "0. Habituation",
@@ -92,15 +158,15 @@
       "mice": []
     },
     {
-      "title": "5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \n(↑ Repeat these 3 trials in the same order)",
+      "title": "5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \\n(↑ Repeat these 3 trials in the same order)",
       "mice": []
     },
     {
-      "title": "6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \n                   LED 2 on – Push – Reward (M) in Interval 2 – \n                   LED 3 on – Push – Reward (A) – [End].",
+      "title": "6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \\n                   LED 2 on – Push – Reward (M) in Interval 2 – \\n                   LED 3 on – Push – Reward (A) – [End].",
       "mice": []
     },
     {
-      "title": "7. [Start] – LED 1 on – Push – Interval 1 – \n                  LED 2 on – Push – Interval 2 – \n                  LED 3 on – Push – Reward (A) – [End].\n (AUTO group Final version)",
+      "title": "7. [Start] – LED 1 on – Push – Interval 1 – \\n                  LED 2 on – Push – Interval 2 – \\n                  LED 3 on – Push – Reward (A) – [End].\\n (AUTO group Final version)",
       "mice": []
     }
   ],
@@ -118,5 +184,6 @@
     "T023",
     "T024",
     "T025"
-  ]
+  ],
+  "dailyRecords": []
 }

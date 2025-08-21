@@ -4,6 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Mouse Training Step Record - Matrix View</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- 
   CHANGELOG - Matrix Version:
   1. Added matrix-wrapper and matrix-grid CSS classes for matrix layout
@@ -80,6 +81,288 @@
       background: linear-gradient(135deg, #ff6b6b 0%, #ee5a24 100%);
       box-shadow: 0 4px 15px rgba(255, 107, 107, 0.3);
     }
+    
+    .view-switch-btn {
+      background: linear-gradient(135deg, #34d399 0%, #10b981 100%) !important;
+      margin-right: 15px;
+      position: relative;
+    }
+    
+    .view-switch-btn:hover {
+      background: linear-gradient(135deg, #22c55e 0%, #059669 100%) !important;
+    }
+    
+    .view-switch-btn.active {
+      background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%) !important;
+      box-shadow: 0 4px 15px rgba(59, 130, 246, 0.4) !important;
+    }
+    
+    .view-switch-btn.active::after {
+       content: '';
+       position: absolute;
+       bottom: -2px;
+       left: 50%;
+       transform: translateX(-50%);
+       width: 80%;
+       height: 3px;
+       background: #ffffff;
+       border-radius: 2px;
+     }
+     
+     /* Daily Records Styles */
+     .filters-container {
+       background: #f8fafc;
+       padding: 20px;
+       border-radius: 12px;
+       margin-bottom: 20px;
+       display: flex;
+       flex-wrap: wrap;
+       gap: 15px;
+       align-items: end;
+       border: 1px solid #e2e8f0;
+     }
+     
+     .filter-group {
+       display: flex;
+       flex-direction: column;
+       min-width: 150px;
+     }
+     
+     .filter-group label {
+       font-weight: 600;
+       color: #374151;
+       margin-bottom: 5px;
+       font-size: 14px;
+     }
+     
+     .filter-group input,
+     .filter-group select {
+       padding: 8px 12px;
+       border: 1px solid #d1d5db;
+       border-radius: 6px;
+       font-size: 14px;
+       background: white;
+     }
+     
+     .apply-filters-btn,
+     .clear-filters-btn {
+       padding: 8px 16px;
+       border: none;
+       border-radius: 6px;
+       font-weight: 600;
+       cursor: pointer;
+       transition: all 0.2s;
+       height: fit-content;
+     }
+     
+     .apply-filters-btn {
+       background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+       color: white;
+     }
+     
+     .clear-filters-btn {
+       background: #6b7280;
+       color: white;
+     }
+     
+     .add-record-btn {
+       background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+       color: white;
+       border: none;
+       padding: 10px 20px;
+       border-radius: 8px;
+       font-weight: 600;
+       cursor: pointer;
+       transition: all 0.2s;
+     }
+     
+     .records-table-container {
+       background: white;
+       border-radius: 12px;
+       overflow: hidden;
+       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+       margin-bottom: 30px;
+     }
+     
+     .records-table {
+       width: 100%;
+       border-collapse: collapse;
+     }
+     
+     .records-table th {
+       background: #f1f5f9;
+       padding: 12px;
+       text-align: left;
+       font-weight: 600;
+       color: #374151;
+       border-bottom: 1px solid #e2e8f0;
+     }
+     
+     .records-table td {
+       padding: 12px;
+       border-bottom: 1px solid #f1f5f9;
+       color: #4b5563;
+     }
+     
+     .records-table tr:hover {
+       background: #f8fafc;
+     }
+     
+     .action-btn {
+       padding: 4px 8px;
+       border: none;
+       border-radius: 4px;
+       cursor: pointer;
+       font-size: 12px;
+       margin-right: 5px;
+     }
+     
+     .edit-btn {
+       background: #3b82f6;
+       color: white;
+     }
+     
+     .delete-btn {
+       background: #ef4444;
+       color: white;
+     }
+     
+     .charts-container {
+       display: grid;
+       grid-template-columns: 1fr 1fr;
+       gap: 20px;
+       margin-top: 30px;
+     }
+     
+     .chart-wrapper {
+       background: white;
+       padding: 20px;
+       border-radius: 12px;
+       box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+     }
+     
+     .chart-wrapper h3 {
+        margin: 0 0 15px 0;
+        color: #374151;
+        font-size: 16px;
+      }
+      
+      /* Modal Styles */
+      .modal {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(0, 0, 0, 0.5);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        z-index: 1000;
+      }
+      
+      .modal-content {
+        background: white;
+        border-radius: 12px;
+        width: 90%;
+        max-width: 600px;
+        max-height: 90vh;
+        overflow-y: auto;
+        box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+      }
+      
+      .modal-header {
+        padding: 20px 20px 0 20px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        border-bottom: 1px solid #e2e8f0;
+        margin-bottom: 20px;
+      }
+      
+      .modal-header h3 {
+        margin: 0;
+        color: #374151;
+        font-size: 18px;
+      }
+      
+      .close-modal {
+        font-size: 24px;
+        cursor: pointer;
+        color: #6b7280;
+        line-height: 1;
+      }
+      
+      .close-modal:hover {
+        color: #374151;
+      }
+      
+      #record-form {
+        padding: 0 20px 20px 20px;
+      }
+      
+      .form-row {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 15px;
+        margin-bottom: 15px;
+      }
+      
+      .form-group {
+        display: flex;
+        flex-direction: column;
+      }
+      
+      .form-group label {
+        font-weight: 600;
+        color: #374151;
+        margin-bottom: 5px;
+        font-size: 14px;
+      }
+      
+      .form-group input,
+      .form-group select,
+      .form-group textarea {
+        padding: 10px 12px;
+        border: 1px solid #d1d5db;
+        border-radius: 6px;
+        font-size: 14px;
+        background: white;
+      }
+      
+      .form-group textarea {
+        resize: vertical;
+        min-height: 80px;
+      }
+      
+      .form-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+        margin-top: 20px;
+        padding-top: 20px;
+        border-top: 1px solid #e2e8f0;
+      }
+      
+      .save-record-btn {
+        background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+      }
+      
+      .cancel-btn {
+        background: #6b7280;
+        color: white;
+        border: none;
+        padding: 10px 20px;
+        border-radius: 6px;
+        font-weight: 600;
+        cursor: pointer;
+      }
     
     .main-content {
       max-width: calc(100vw - 40px);
@@ -823,6 +1106,8 @@
     <div class="header-content">
       <h1 class="app-title">Lever Task Training Progress Tracking Table</h1>
       <div id="controls">
+        <button id="training-view-btn" class="view-switch-btn active">Training Steps</button>
+        <button id="daily-records-view-btn" class="view-switch-btn">Daily Records</button>
         <button id="edit-mode-btn">Enable Edit Mode</button>
         <button id="export-btn">Export Data</button>
         <button id="backup-btn">Download Backup</button>
@@ -833,9 +1118,10 @@
   </header>
 
   <main class="main-content">
-    <section class="section">
+    <!-- Training Steps View -->
+    <section class="section" id="training-view">
       <div class="section-header">
-        <h2 class="section-title">Tracking</h2>
+        <h2 class="section-title">Training Steps</h2>
       </div>
       
       <!-- Matrix Layout for Desktop -->
@@ -856,7 +1142,123 @@
       </div>
     </section>
     
-    <section class="section">
+    <!-- Daily Records View -->
+    <section class="section" id="daily-records-view" style="display:none;">
+      <div class="section-header">
+        <h2 class="section-title">Daily Records</h2>
+        <button id="add-record-btn" class="add-record-btn">Add New Record</button>
+      </div>
+      
+      <!-- Filters -->
+      <div class="filters-container">
+        <div class="filter-group">
+          <label for="filter-mouse">Mouse ID:</label>
+          <select id="filter-mouse">
+            <option value="">All Mice</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label for="filter-start-date">Start Date:</label>
+          <input type="date" id="filter-start-date">
+        </div>
+        <div class="filter-group">
+          <label for="filter-end-date">End Date:</label>
+          <input type="date" id="filter-end-date">
+        </div>
+        <button id="apply-filters-btn" class="apply-filters-btn">Apply Filters</button>
+        <button id="clear-filters-btn" class="clear-filters-btn">Clear</button>
+        <button onclick="filterByDateRange(7)" class="filter-btn">Last 7 Days</button>
+        <button onclick="filterByDateRange(30)" class="filter-btn">Last 30 Days</button>
+        <button onclick="exportFilteredRecords()" class="filter-btn">Export</button>
+      </div>
+      
+      <!-- Records Table -->
+      <div class="records-table-container">
+        <table class="records-table">
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Mouse ID</th>
+              <th>Training Duration (min)</th>
+              <th>Weight (g)</th>
+              <th>Water Reward (ml)</th>
+              <th>Task Info</th>
+              <th>Remarks</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="records-tbody">
+            <!-- Records will be populated here -->
+          </tbody>
+        </table>
+      </div>
+      
+      <!-- Charts Section -->
+      <div class="charts-container">
+        <div class="chart-wrapper">
+          <h3>Weight Trends</h3>
+          <canvas id="weight-chart" width="400" height="200"></canvas>
+        </div>
+        <div class="chart-wrapper">
+          <h3>Training Duration Trends</h3>
+          <canvas id="duration-chart" width="400" height="200"></canvas>
+        </div>
+      </div>
+     </section>
+     
+     <!-- Daily Record Form Modal -->
+     <div id="record-form-modal" class="modal" style="display:none;">
+       <div class="modal-content">
+         <div class="modal-header">
+           <h3 id="record-form-title">Add Daily Record</h3>
+           <span class="close-modal">&times;</span>
+         </div>
+         <form id="record-form">
+           <div class="form-row">
+             <div class="form-group">
+               <label for="record-date">Date:</label>
+               <input type="date" id="record-date" required>
+             </div>
+             <div class="form-group">
+               <label for="record-mouse-id">Mouse ID:</label>
+               <select id="record-mouse-id" required>
+                 <option value="">Select Mouse</option>
+               </select>
+             </div>
+           </div>
+           <div class="form-row">
+             <div class="form-group">
+               <label for="record-duration">Training Duration (minutes):</label>
+               <input type="number" id="record-duration" min="0" step="0.1">
+             </div>
+             <div class="form-group">
+               <label for="record-weight">Weight (grams):</label>
+               <input type="number" id="record-weight" min="0" step="0.1">
+             </div>
+           </div>
+           <div class="form-row">
+             <div class="form-group">
+               <label for="record-water-reward">Water Reward (ml):</label>
+               <input type="number" id="record-water-reward" min="0" step="0.1">
+             </div>
+             <div class="form-group">
+               <label for="record-task-info">Task Information:</label>
+               <input type="text" id="record-task-info">
+             </div>
+           </div>
+           <div class="form-group">
+             <label for="record-remarks">Remarks:</label>
+             <textarea id="record-remarks" rows="3"></textarea>
+           </div>
+           <div class="form-actions">
+             <button type="submit" class="save-record-btn">Save Record</button>
+             <button type="button" class="cancel-btn">Cancel</button>
+           </div>
+         </form>
+       </div>
+     </div>
+     
+     <section class="section">
       <div class="section-header">
         <h2 class="section-title">Mouse List</h2>
       </div>
@@ -886,11 +1288,13 @@
 
   <script>
     // State and persistence
-    let state = { mice: [], steps: [], mouseOrder: [] };
+    let state = { mice: [], steps: [], mouseOrder: [], dailyRecords: [] };
     let editMode = false;
     let stepColumnWidth = 600; // Increased default width
     let draggedRowIndex = null;
     let draggedColumnId = null;
+    let currentView = 'training'; // 'training' or 'daily-records'
+    let currentEditingRecord = null; // For editing daily records
     
     // Dynamic column width adjustment based on screen size
     function getOptimalStepColumnWidth() {
@@ -939,21 +1343,31 @@
         const response = await fetch('/api/data');
         if (response.ok) {
           const serverData = await response.json();
-          state = serverData;
-          console.log('Data loaded from server');
           
-          // 确保mouseOrder存在，用于向后兼容
-          if (!state.mouseOrder) {
-            const allMice = [...state.mice];
-            state.steps.forEach(step => {
-              step.mice.forEach(mouse => {
-                if (!allMice.some(m => m.id === mouse.id)) {
-                  allMice.push(mouse);
-                }
+          // 验证服务器数据的有效性
+          if (isValidStateData(serverData)) {
+            state = serverData;
+            console.log('Data loaded from server');
+            
+            // 确保mouseOrder存在，用于向后兼容
+            if (!state.mouseOrder) {
+              const allMice = [...state.mice];
+              state.steps.forEach(step => {
+                step.mice.forEach(mouse => {
+                  if (!allMice.some(m => m.id === mouse.id)) {
+                    allMice.push(mouse);
+                  }
+                });
               });
-            });
-            state.mouseOrder = allMice.map(m => m.id).sort();
-            saveState(); // 保存更新后的状态
+              state.mouseOrder = allMice.map(m => m.id).sort();
+              saveState(); // 保存更新后的状态
+            }
+            
+            // 检查并更新session count（工作日自动递增）
+            updateSessionCounts();
+          } else {
+            console.warn('Invalid server data, initializing defaults');
+            initializeDefaultData();
           }
         } else {
           throw new Error('Failed to load from server');
@@ -964,26 +1378,145 @@
         // 如果服务器加载失败，尝试从localStorage加载
         const saved = localStorage.getItem('mouseTrainingData');
         if (saved) {
-          state = JSON.parse(saved);
-          // 确保mouseOrder存在
-          if (!state.mouseOrder) {
-            const allMice = [...state.mice];
-            state.steps.forEach(step => {
-              step.mice.forEach(mouse => {
-                if (!allMice.some(m => m.id === mouse.id)) {
-                  allMice.push(mouse);
-                }
+          const localData = JSON.parse(saved);
+          if (isValidStateData(localData)) {
+            state = localData;
+            // 确保mouseOrder存在
+            if (!state.mouseOrder) {
+              const allMice = [...state.mice];
+              state.steps.forEach(step => {
+                step.mice.forEach(mouse => {
+                  if (!allMice.some(m => m.id === mouse.id)) {
+                    allMice.push(mouse);
+                  }
+                });
               });
-            });
-            state.mouseOrder = allMice.map(m => m.id).sort();
+              state.mouseOrder = allMice.map(m => m.id).sort();
+            }
+            // 检查并更新session count
+            updateSessionCounts();
+            // 尝试将localStorage数据同步到服务器
+            saveState();
+          } else {
+            console.warn('Invalid localStorage data, initializing defaults');
+            initializeDefaultData();
           }
-          // 尝试将localStorage数据同步到服务器
-          saveState();
         } else {
           initializeDefaultData();
         }
       }
     }
+    // 验证状态数据的有效性
+    function isValidStateData(data) {
+      if (!data || typeof data !== 'object') {
+        return false;
+      }
+      
+      // 检查必要的属性是否存在
+      if (!Array.isArray(data.mice) || !Array.isArray(data.steps)) {
+        return false;
+      }
+      
+      // 检查是否有默认的训练步骤（至少应该有8个步骤：0-7）
+      if (data.steps.length < 8) {
+        return false;
+      }
+      
+      // 检查步骤标题是否包含预期的默认步骤
+      const expectedSteps = [
+        '0. Habituation',
+        '1a. Touch – Reward (M). (1 lever, LED constantly on)',
+        '1b. Push – Reward (M)',
+        '2. [Start] – LED on – Push – Reward (M) – [End]. (1 lever)',
+        '3. [Start] – LED on – Push – Reward (A) – [End]. (1 lever, position changing)',
+        '4. [Start] – 1 of 3 LED on – Push – Reward (A) – [End]. (3 lever)',
+        '5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \\n(↑ Repeat these 3 trials in the same order)',
+        '6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \\n                   LED 2 on – Push – Reward (M) in Interval 2 – \\n                   LED 3 on – Push – Reward (A) – [End].'
+      ];
+      
+      // 检查前8个步骤是否匹配（0-7步骤，但实际上服务器只有8个步骤）
+      const minStepsToCheck = Math.min(expectedSteps.length, data.steps.length);
+      
+      for (let i = 0; i < minStepsToCheck; i++) {
+        if (!data.steps[i] || data.steps[i].title !== expectedSteps[i]) {
+          return false;
+        }
+      }
+      
+      return true;
+    }
+    
+    // 更新session count（工作日自动递增）
+    function updateSessionCounts() {
+      const today = new Date();
+      const todayStr = today.toISOString().split('T')[0];
+      
+      // 获取上次更新的日期
+      const lastUpdateDate = localStorage.getItem('lastSessionUpdate');
+      
+      if (lastUpdateDate !== todayStr) {
+        // 检查今天是否是工作日（周一到周五）
+        const dayOfWeek = today.getDay();
+        const isWorkday = dayOfWeek >= 1 && dayOfWeek <= 5;
+        
+        if (isWorkday && lastUpdateDate) {
+          // 计算从上次更新到今天的工作日数量
+          const lastDate = new Date(lastUpdateDate);
+          const workdaysElapsed = getWorkdaysBetween(lastDate, today);
+          
+          if (workdaysElapsed > 0) {
+            // 更新所有有session count的小鼠
+            let updated = false;
+            
+            // 更新mice列表中的session count
+            state.mice.forEach(mouse => {
+              if (mouse.sessions && mouse.sessions !== '') {
+                const currentSessions = parseInt(mouse.sessions) || 0;
+                mouse.sessions = (currentSessions + workdaysElapsed).toString();
+                updated = true;
+              }
+            });
+            
+            // 更新steps中分配的小鼠的session count
+            state.steps.forEach(step => {
+              step.mice.forEach(mouse => {
+                if (mouse.sessions && mouse.sessions !== '') {
+                  const currentSessions = parseInt(mouse.sessions) || 0;
+                  mouse.sessions = (currentSessions + workdaysElapsed).toString();
+                  updated = true;
+                }
+              });
+            });
+            
+            if (updated) {
+              console.log(`Updated session counts by ${workdaysElapsed} workdays`);
+              saveState();
+            }
+          }
+        }
+        
+        // 更新最后更新日期
+        localStorage.setItem('lastSessionUpdate', todayStr);
+      }
+    }
+    
+    // 计算两个日期之间的工作日数量
+    function getWorkdaysBetween(startDate, endDate) {
+      let count = 0;
+      const current = new Date(startDate);
+      current.setDate(current.getDate() + 1); // 从下一天开始计算
+      
+      while (current <= endDate) {
+        const dayOfWeek = current.getDay();
+        if (dayOfWeek >= 1 && dayOfWeek <= 5) { // 周一到周五
+          count++;
+        }
+        current.setDate(current.getDate() + 1);
+      }
+      
+      return count;
+    }
+    
     // Color options
     const defaultColors = ['#aecbfa', '#d7aefb', '#ccff90']; // Light Blue, Light Purple, Light Green
     let selectedColor = defaultColors[0];
@@ -1006,7 +1539,7 @@
          { "id": "T025", "sessions": "", "color": "#ccff90" }
        ];
       
-      // Initialize steps with actual data from mouseTrainingData.json
+      // Initialize steps with actual data from server defaults
       state.steps = [
         {
           "title": "0. Habituation",
@@ -1047,15 +1580,15 @@
           "mice": []
         },
         {
-          "title": "5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \n(↑ Repeat these 3 trials in the same order)",
+          "title": "5. [Start] – LED 1 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 2 on – Push – Reward (A) – [End], ITI, \\n    [Start] – LED 3 on – Push – Reward (A+M) – [End]. \\n(↑ Repeat these 3 trials in the same order)",
           "mice": []
         },
         {
-          "title": "6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \n                   LED 2 on – Push – Reward (M) in Interval 2 – \n                   LED 3 on – Push – Reward (A) – [End].",
+          "title": "6. [Start] – LED 1 on – Push – Reward (M) in Interval 1 – \\n                   LED 2 on – Push – Reward (M) in Interval 2 – \\n                   LED 3 on – Push – Reward (A) – [End].",
           "mice": []
         },
         {
-          "title": "7. [Start] – LED 1 on – Push – Interval 1 – \n                  LED 2 on – Push – Interval 2 – \n                  LED 3 on – Push – Reward (A) – [End].\n (AUTO group Final version)",
+          "title": "7. [Start] – LED 1 on – Push – Interval 1 – \\n                  LED 2 on – Push – Interval 2 – \\n                  LED 3 on – Push – Reward (A) – [End].\\n (AUTO group Final version)",
           "mice": []
         }
       ];
@@ -1988,114 +2521,654 @@
       }
     });
 
-    // Edit mode toggle
-    document.getElementById('edit-mode-btn').addEventListener('click', () => {
-      editMode = !editMode;
-      const btn = document.getElementById('edit-mode-btn');
-      const addStepDiv = document.getElementById('add-step-form');
+    // View switching
+    function switchView(view) {
+      currentView = view;
+      const trainingView = document.getElementById('training-view');
+      const dailyRecordsView = document.getElementById('daily-records-view');
+      const trainingBtn = document.getElementById('training-view-btn');
+      const dailyRecordsBtn = document.getElementById('daily-records-view-btn');
       
-      if (editMode) {
-        btn.textContent = 'Save';
-        btn.style.backgroundColor = '#ff6b6b';
-        addStepDiv.style.display = 'block';
+      if (view === 'training') {
+        trainingView.style.display = 'block';
+        dailyRecordsView.style.display = 'none';
+        trainingBtn.classList.add('active');
+        dailyRecordsBtn.classList.remove('active');
       } else {
-        btn.textContent = 'Enable Edit Mode';
-        btn.style.backgroundColor = '';
-        addStepDiv.style.display = 'none';
+        trainingView.style.display = 'none';
+        dailyRecordsView.style.display = 'block';
+        trainingBtn.classList.remove('active');
+        dailyRecordsBtn.classList.add('active');
+        loadDailyRecords();
+        populateMouseFilter();
+      }
+    }
+    
+    // View switch event listeners
+    document.getElementById('training-view-btn').addEventListener('click', () => switchView('training'));
+    document.getElementById('daily-records-view-btn').addEventListener('click', () => switchView('daily-records'));
+    
+    // Daily Records Functions
+    async function loadDailyRecords() {
+      try {
+        const response = await fetch('/api/daily-records');
+        if (response.ok) {
+          const records = await response.json();
+          state.dailyRecords = records;
+          renderDailyRecords();
+        }
+      } catch (error) {
+        console.error('Error loading daily records:', error);
+        // Fallback to local state
+        renderDailyRecords();
+      }
+    }
+    
+    function renderDailyRecords() {
+      const tbody = document.getElementById('records-tbody');
+      tbody.innerHTML = '';
+      
+      const filteredRecords = getFilteredRecords();
+      
+      filteredRecords.forEach(record => {
+        const row = document.createElement('tr');
+        row.innerHTML = `
+          <td>${record.date}</td>
+          <td>${record.mouseId}</td>
+          <td>${record.duration || '-'}</td>
+          <td>${record.weight || '-'}</td>
+          <td>${record.waterReward || '-'}</td>
+          <td>${record.taskInfo || '-'}</td>
+          <td>${record.remarks || '-'}</td>
+          <td>
+            <button class="action-btn edit-btn" onclick="editRecord('${record.id}')">Edit</button>
+            <button class="action-btn delete-btn" onclick="deleteRecord('${record.id}')">Delete</button>
+          </td>
+        `;
+        tbody.appendChild(row);
+      });
+      
+      // Render charts after updating the table
+      renderCharts();
+    }
+    
+    function getFilteredRecords() {
+      let filtered = [...state.dailyRecords];
+      
+      const mouseFilter = document.getElementById('filter-mouse').value;
+      const startDate = document.getElementById('filter-start-date').value;
+      const endDate = document.getElementById('filter-end-date').value;
+      
+      if (mouseFilter) {
+        filtered = filtered.filter(record => record.mouseId === mouseFilter);
       }
       
-      renderMatrix();
-      renderSteps();
-    });
-
-    // Adding new step
-    document.getElementById('add-step-button').addEventListener('click', () => {
-      if (!editMode) {
-        alert('Please enable edit mode first');
+      if (startDate) {
+        filtered = filtered.filter(record => record.date >= startDate);
+      }
+      
+      if (endDate) {
+        filtered = filtered.filter(record => record.date <= endDate);
+      }
+      
+      // Sort by date (newest first)
+      filtered.sort((a, b) => new Date(b.date) - new Date(a.date));
+      
+      return filtered;
+    }
+    
+    // Advanced filtering functions
+    function filterByDateRange(days) {
+      const endDate = new Date();
+      const startDate = new Date();
+      startDate.setDate(endDate.getDate() - days);
+      
+      document.getElementById('filter-start-date').value = startDate.toISOString().split('T')[0];
+      document.getElementById('filter-end-date').value = endDate.toISOString().split('T')[0];
+      renderDailyRecords();
+    }
+    
+    function exportFilteredRecords() {
+      const filteredRecords = getFilteredRecords();
+      if (filteredRecords.length === 0) {
+        alert('No records to export');
         return;
       }
-      const desc = document.getElementById('new-step-description').value.trim(); 
-      if (!desc) {
-        alert('Please enter a step description');
-        return;
-      }
-      state.steps.push({ title: `${state.steps.length}. ${desc}`, mice: [] }); 
-      saveState(); 
-      renderMatrix(); 
-      renderSteps(); 
-      document.getElementById('new-step-description').value = '';
-    });
-
-    // Allow Enter key to add step
-    document.getElementById('new-step-description').addEventListener('keypress', (e) => {
-      if (e.key === 'Enter') {
-        document.getElementById('add-step-button').click();
-      }
-    });
-
-    // Import/export
-    document.getElementById('export-btn').addEventListener('click', () => {
-      const dataStr = JSON.stringify(state, null, 2);
+      
+      const dataStr = JSON.stringify(filteredRecords, null, 2);
       const blob = new Blob([dataStr], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a'); 
-      a.href = url; 
-      a.download = 'mouseTrainingData.json'; 
-      a.click(); 
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `daily_records_${new Date().toISOString().split('T')[0]}.json`;
+      a.click();
       URL.revokeObjectURL(url);
-    });
-    
-    // Backup from server
-    document.getElementById('backup-btn').addEventListener('click', () => {
-      window.location.href = '/api/backup';
-    });
-    document.getElementById('import-btn').addEventListener('click', () => document.getElementById('import-file').click());
-    document.getElementById('import-file').addEventListener('change', e => {
-      const file = e.target.files[0]; 
-      if (!file) return;
-      const reader = new FileReader(); 
-      reader.onload = () => {
-        try {
-          const newState = JSON.parse(reader.result);
-          if (confirm('Overwrite existing data? OK to overwrite, Cancel to append.')) {
-            state = newState;
-            // Ensure mouseOrder exists for backward compatibility
-            if (!state.mouseOrder) {
-              const allMice = [...state.mice];
-              state.steps.forEach(step => {
-                step.mice.forEach(mouse => {
-                  if (!allMice.some(m => m.id === mouse.id)) {
-                    allMice.push(mouse);
-                  }
-                });
-              });
-              state.mouseOrder = allMice.map(m => m.id).sort();
+    }
+
+    // Chart variables
+    let weightChart = null;
+    let durationChart = null;
+
+    // Render charts
+    function renderCharts() {
+      const filteredRecords = getFilteredRecords();
+      if (filteredRecords.length === 0) {
+        // Clear charts if no data
+        if (weightChart) {
+          weightChart.destroy();
+          weightChart = null;
+        }
+        if (durationChart) {
+          durationChart.destroy();
+          durationChart = null;
+        }
+        return;
+      }
+
+      // Group data by mouse ID
+      const mouseData = {};
+      filteredRecords.forEach(record => {
+        if (!mouseData[record.mouseId]) {
+          mouseData[record.mouseId] = [];
+        }
+        mouseData[record.mouseId].push(record);
+      });
+
+      // Sort records by date for each mouse
+      Object.keys(mouseData).forEach(mouseId => {
+        mouseData[mouseId].sort((a, b) => new Date(a.date) - new Date(b.date));
+      });
+
+      renderWeightChart(mouseData);
+      renderDurationChart(mouseData);
+    }
+
+    // Render weight trends chart
+    function renderWeightChart(mouseData) {
+      const ctx = document.getElementById('weight-chart').getContext('2d');
+      
+      if (weightChart) {
+        weightChart.destroy();
+      }
+
+      const datasets = [];
+      const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
+      let colorIndex = 0;
+
+      Object.keys(mouseData).forEach(mouseId => {
+        const records = mouseData[mouseId].filter(r => r.weight && r.weight > 0);
+        if (records.length > 0) {
+          datasets.push({
+            label: `Mouse ${mouseId}`,
+            data: records.map(r => ({ x: r.date, y: parseFloat(r.weight) })),
+            borderColor: colors[colorIndex % colors.length],
+            backgroundColor: colors[colorIndex % colors.length] + '20',
+            tension: 0.1,
+            fill: false
+          });
+          colorIndex++;
+        }
+      });
+
+      weightChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Weight Trends Over Time'
+            },
+            legend: {
+              display: true,
+              position: 'top'
             }
-          } else { 
-            state.mice = state.mice.concat(newState.mice || []); 
-            state.steps = state.steps.concat(newState.steps || []);
-            // Merge mouse order
-            if (newState.mouseOrder) {
-              newState.mouseOrder.forEach(mouseId => {
-                if (!state.mouseOrder.includes(mouseId)) {
-                  state.mouseOrder.push(mouseId);
-                }
-              });
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day'
+              },
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Weight (g)'
+              }
             }
           }
-          saveState(); 
-          renderMiceList(); 
-          renderMatrix(); 
-          renderSteps();
-        } catch { 
-          alert('Invalid JSON'); 
         }
-      };
-      reader.readAsText(file);
-    });
+      });
+    }
+
+    // Render training duration trends chart
+    function renderDurationChart(mouseData) {
+      const ctx = document.getElementById('duration-chart').getContext('2d');
+      
+      if (durationChart) {
+        durationChart.destroy();
+      }
+
+      const datasets = [];
+      const colors = ['#3b82f6', '#ef4444', '#10b981', '#f59e0b', '#8b5cf6', '#06b6d4'];
+      let colorIndex = 0;
+
+      Object.keys(mouseData).forEach(mouseId => {
+        const records = mouseData[mouseId].filter(r => r.duration && r.duration > 0);
+        if (records.length > 0) {
+          datasets.push({
+            label: `Mouse ${mouseId}`,
+            data: records.map(r => ({ x: r.date, y: parseFloat(r.duration) })),
+            borderColor: colors[colorIndex % colors.length],
+            backgroundColor: colors[colorIndex % colors.length] + '20',
+            tension: 0.1,
+            fill: false
+          });
+          colorIndex++;
+        }
+      });
+
+      durationChart = new Chart(ctx, {
+        type: 'line',
+        data: { datasets },
+        options: {
+          responsive: true,
+          plugins: {
+            title: {
+              display: true,
+              text: 'Training Duration Trends Over Time'
+            },
+            legend: {
+              display: true,
+              position: 'top'
+            }
+          },
+          scales: {
+            x: {
+              type: 'time',
+              time: {
+                unit: 'day'
+              },
+              title: {
+                display: true,
+                text: 'Date'
+              }
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Duration (minutes)'
+              }
+            }
+          }
+        }
+      });
+    }
+    
+    function populateMouseFilter() {
+      const select = document.getElementById('filter-mouse');
+      const recordMouseSelect = document.getElementById('record-mouse-id');
+      
+      // Clear existing options (except "All Mice" for filter)
+      select.innerHTML = '<option value="">All Mice</option>';
+      recordMouseSelect.innerHTML = '<option value="">Select Mouse</option>';
+      
+      // Get all unique mouse IDs
+      const allMice = [...state.mice];
+      state.steps.forEach(step => {
+        step.mice.forEach(mouse => {
+          if (!allMice.some(m => m.id === mouse.id)) {
+            allMice.push(mouse);
+          }
+        });
+      });
+      
+      // Sort mouse IDs
+      const sortedMice = allMice.sort((a, b) => a.id.localeCompare(b.id));
+      
+      sortedMice.forEach(mouse => {
+        const option1 = document.createElement('option');
+        option1.value = mouse.id;
+        option1.textContent = mouse.id;
+        select.appendChild(option1);
+        
+        const option2 = document.createElement('option');
+        option2.value = mouse.id;
+        option2.textContent = mouse.id;
+        recordMouseSelect.appendChild(option2);
+      });
+    }
+    
+    function showRecordModal(record = null) {
+      const modal = document.getElementById('record-form-modal');
+      const title = document.getElementById('record-form-title');
+      const form = document.getElementById('record-form');
+      
+      currentEditingRecord = record;
+      
+      if (record) {
+        title.textContent = 'Edit Daily Record';
+        document.getElementById('record-date').value = record.date;
+        document.getElementById('record-mouse-id').value = record.mouseId;
+        document.getElementById('record-duration').value = record.duration || '';
+        document.getElementById('record-weight').value = record.weight || '';
+        document.getElementById('record-water-reward').value = record.waterReward || '';
+        document.getElementById('record-task-info').value = record.taskInfo || '';
+        document.getElementById('record-remarks').value = record.remarks || '';
+      } else {
+        title.textContent = 'Add Daily Record';
+        form.reset();
+        // Set today's date as default
+        document.getElementById('record-date').value = new Date().toISOString().split('T')[0];
+      }
+      
+      modal.style.display = 'flex';
+    }
+    
+    function hideRecordModal() {
+      document.getElementById('record-form-modal').style.display = 'none';
+      currentEditingRecord = null;
+    }
+    
+    async function saveRecord(recordData) {
+      try {
+        const method = currentEditingRecord ? 'PUT' : 'POST';
+        const url = currentEditingRecord ? `/api/daily-records/${currentEditingRecord.id}` : '/api/daily-records';
+        
+        const response = await fetch(url, {
+          method: method,
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(recordData)
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          if (currentEditingRecord) {
+            // Update existing record
+            const index = state.dailyRecords.findIndex(r => r.id === currentEditingRecord.id);
+            if (index !== -1) {
+              state.dailyRecords[index] = result;
+            }
+          } else {
+            // Add new record
+            state.dailyRecords.push(result);
+          }
+          renderDailyRecords();
+          hideRecordModal();
+        } else {
+          alert('Failed to save record');
+        }
+      } catch (error) {
+        console.error('Error saving record:', error);
+        alert('Error saving record');
+      }
+    }
+    
+    async function deleteRecord(recordId) {
+      if (!confirm('Are you sure you want to delete this record?')) {
+        return;
+      }
+      
+      try {
+        const response = await fetch(`/api/daily-records/${recordId}`, {
+          method: 'DELETE'
+        });
+        
+        if (response.ok) {
+          state.dailyRecords = state.dailyRecords.filter(r => r.id !== recordId);
+          renderDailyRecords();
+        } else {
+          alert('Failed to delete record');
+        }
+      } catch (error) {
+        console.error('Error deleting record:', error);
+        alert('Error deleting record');
+      }
+    }
+    
+    function editRecord(recordId) {
+      const record = state.dailyRecords.find(r => r.id === recordId);
+      if (record) {
+        showRecordModal(record);
+      }
+    }
+    
+    function initializeEventListeners() {
+      // Daily Records Event Listeners (with null checks)
+      const addRecordBtn = document.getElementById('add-record-btn');
+      if (addRecordBtn) {
+        addRecordBtn.addEventListener('click', () => showRecordModal());
+      }
+      
+      const applyFiltersBtn = document.getElementById('apply-filters-btn');
+      if (applyFiltersBtn) {
+        applyFiltersBtn.addEventListener('click', renderDailyRecords);
+      }
+      
+      const clearFiltersBtn = document.getElementById('clear-filters-btn');
+      if (clearFiltersBtn) {
+        clearFiltersBtn.addEventListener('click', () => {
+          const filterMouse = document.getElementById('filter-mouse');
+          const filterStartDate = document.getElementById('filter-start-date');
+          const filterEndDate = document.getElementById('filter-end-date');
+          if (filterMouse) filterMouse.value = '';
+          if (filterStartDate) filterStartDate.value = '';
+          if (filterEndDate) filterEndDate.value = '';
+          renderDailyRecords();
+        });
+      }
+      
+      // Quick filter event listeners
+      const filter7Days = document.getElementById('filter-7-days');
+      if (filter7Days) {
+        filter7Days.addEventListener('click', () => filterByDateRange(7));
+      }
+      
+      const filter30Days = document.getElementById('filter-30-days');
+      if (filter30Days) {
+        filter30Days.addEventListener('click', () => filterByDateRange(30));
+      }
+      
+      const exportRecordsBtn = document.getElementById('export-records-btn');
+      if (exportRecordsBtn) {
+        exportRecordsBtn.addEventListener('click', exportFilteredRecords);
+      }
+      
+      // Modal event listeners
+      const recordFormClose = document.getElementById('record-form-close');
+      if (recordFormClose) {
+        recordFormClose.addEventListener('click', hideRecordModal);
+      }
+      
+      const recordFormCancel = document.getElementById('record-form-cancel');
+      if (recordFormCancel) {
+        recordFormCancel.addEventListener('click', hideRecordModal);
+      }
+      
+      const recordFormModal = document.getElementById('record-form-modal');
+      if (recordFormModal) {
+        recordFormModal.addEventListener('click', (e) => {
+          if (e.target === recordFormModal) {
+            hideRecordModal();
+          }
+        });
+      }
+      
+      // Form submission
+      const recordForm = document.getElementById('record-form');
+      if (recordForm) {
+        recordForm.addEventListener('submit', (e) => {
+          e.preventDefault();
+          
+          const formData = new FormData(e.target);
+          const recordData = {
+            date: formData.get('date'),
+            mouseId: formData.get('mouseId'),
+            duration: formData.get('duration') || null,
+            weight: formData.get('weight') || null,
+            waterReward: formData.get('waterReward') || null,
+            taskInfo: formData.get('taskInfo') || null,
+            remarks: formData.get('remarks') || null
+          };
+          
+          // Validation
+          if (!recordData.date || !recordData.mouseId) {
+            alert('Date and Mouse ID are required');
+            return;
+          }
+          
+          if (currentEditingRecord) {
+            recordData.id = currentEditingRecord.id;
+          }
+          
+          saveRecord(recordData);
+        });
+      }
+
+      // Edit mode toggle
+      const editModeBtn = document.getElementById('edit-mode-btn');
+      if (editModeBtn) {
+        editModeBtn.addEventListener('click', () => {
+          editMode = !editMode;
+          const btn = document.getElementById('edit-mode-btn');
+          const addStepDiv = document.getElementById('add-step-form');
+          
+          if (editMode) {
+            btn.textContent = 'Save';
+            btn.style.backgroundColor = '#ff6b6b';
+            if (addStepDiv) addStepDiv.style.display = 'block';
+          } else {
+            btn.textContent = 'Enable Edit Mode';
+            btn.style.backgroundColor = '';
+            if (addStepDiv) addStepDiv.style.display = 'none';
+          }
+          
+          renderMatrix();
+          renderSteps();
+        });
+      }
+
+      // Adding new step
+      const addStepButton = document.getElementById('add-step-button');
+      if (addStepButton) {
+        addStepButton.addEventListener('click', () => {
+          if (!editMode) {
+            alert('Please enable edit mode first');
+            return;
+          }
+          const descInput = document.getElementById('new-step-description');
+          if (!descInput) return;
+          
+          const desc = descInput.value.trim(); 
+          if (!desc) {
+            alert('Please enter a step description');
+            return;
+          }
+          state.steps.push({ title: `${state.steps.length}. ${desc}`, mice: [] }); 
+          saveState(); 
+          renderMatrix(); 
+          renderSteps(); 
+          descInput.value = '';
+        });
+      }
+
+      // Allow Enter key to add step
+      const newStepDescription = document.getElementById('new-step-description');
+      if (newStepDescription) {
+        newStepDescription.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') {
+            const addBtn = document.getElementById('add-step-button');
+            if (addBtn) addBtn.click();
+          }
+        });
+      }
+
+      // Import/export
+      const exportBtn = document.getElementById('export-btn');
+      if (exportBtn) {
+        exportBtn.addEventListener('click', () => {
+          const dataStr = JSON.stringify(state, null, 2);
+          const blob = new Blob([dataStr], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const a = document.createElement('a'); 
+          a.href = url; 
+          a.download = 'mouseTrainingData.json'; 
+          a.click(); 
+          URL.revokeObjectURL(url);
+        });
+      }
+      
+      // Backup from server
+      const backupBtn = document.getElementById('backup-btn');
+      if (backupBtn) {
+        backupBtn.addEventListener('click', () => {
+          window.location.href = '/api/backup';
+        });
+      }
+      
+      const importBtn = document.getElementById('import-btn');
+      const importFile = document.getElementById('import-file');
+      if (importBtn && importFile) {
+        importBtn.addEventListener('click', () => importFile.click());
+        importFile.addEventListener('change', e => {
+        const file = e.target.files[0]; 
+        if (!file) return;
+        const reader = new FileReader(); 
+        reader.onload = () => {
+          try {
+            const newState = JSON.parse(reader.result);
+            if (confirm('Overwrite existing data? OK to overwrite, Cancel to append.')) {
+              state = newState;
+              // Ensure mouseOrder exists for backward compatibility
+              if (!state.mouseOrder) {
+                const allMice = [...state.mice];
+                state.steps.forEach(step => {
+                  step.mice.forEach(mouse => {
+                    if (!allMice.some(m => m.id === mouse.id)) {
+                      allMice.push(mouse);
+                    }
+                  });
+                });
+                state.mouseOrder = allMice.map(m => m.id).sort();
+              }
+            } else { 
+              state.mice = state.mice.concat(newState.mice || []); 
+              state.steps = state.steps.concat(newState.steps || []);
+              // Merge mouse order
+              if (newState.mouseOrder) {
+                newState.mouseOrder.forEach(mouseId => {
+                  if (!state.mouseOrder.includes(mouseId)) {
+                    state.mouseOrder.push(mouseId);
+                  }
+                });
+              }
+            }
+            saveState(); 
+            renderMiceList(); 
+            renderMatrix(); 
+            renderSteps();
+          } catch { 
+            alert('Invalid JSON'); 
+          }
+        };
+        reader.readAsText(file);
+        });
+      }
+    }
 
     // Initialize
     document.addEventListener('DOMContentLoaded', async () => {
+      // Initialize event listeners first
+      initializeEventListeners();
+      
       renderColorOptions(document.getElementById('color-options'), col => {});
       
       // Load state first, then render
@@ -2103,6 +3176,12 @@
       renderMiceList(); 
       renderMatrix(); 
       renderSteps();
+      
+      // Initialize daily records
+      populateMouseFilter();
+      if (currentView === 'daily-records') {
+        await loadDailyRecords();
+      }
       
       // Add window resize listener for responsive layout
       window.addEventListener('resize', () => {

@@ -151,6 +151,139 @@ app.get('/api/backup', requireAuth, (req, res) => {
   }
 });
 
+// Daily Records API endpoints
+// Get all daily records
+app.get('/api/daily-records', requireAuth, (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    res.json(data.dailyRecords || []);
+  } catch (error) {
+    console.error('Error reading daily records:', error);
+    res.status(500).json({ error: 'Failed to read daily records' });
+  }
+});
+
+// Add new daily record
+app.post('/api/daily-records', requireAuth, (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (!data.dailyRecords) {
+      data.dailyRecords = [];
+    }
+    
+    const newRecord = {
+      id: Date.now().toString(),
+      mouseId: req.body.mouseId,
+      date: req.body.date,
+      trainingDuration: req.body.trainingDuration,
+      weight: req.body.weight,
+      waterReward: req.body.waterReward,
+      taskInfo: req.body.taskInfo,
+      remarks: req.body.remarks,
+      createdAt: new Date().toISOString(),
+      updatedAt: new Date().toISOString()
+    };
+    
+    data.dailyRecords.push(newRecord);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true, record: newRecord });
+  } catch (error) {
+    console.error('Error adding daily record:', error);
+    res.status(500).json({ error: 'Failed to add daily record' });
+  }
+});
+
+// Update daily record
+app.put('/api/daily-records/:id', requireAuth, (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (!data.dailyRecords) {
+      return res.status(404).json({ error: 'Daily records not found' });
+    }
+    
+    const recordIndex = data.dailyRecords.findIndex(record => record.id === req.params.id);
+    if (recordIndex === -1) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+    
+    const updatedRecord = {
+      ...data.dailyRecords[recordIndex],
+      mouseId: req.body.mouseId,
+      date: req.body.date,
+      trainingDuration: req.body.trainingDuration,
+      weight: req.body.weight,
+      waterReward: req.body.waterReward,
+      taskInfo: req.body.taskInfo,
+      remarks: req.body.remarks,
+      updatedAt: new Date().toISOString()
+    };
+    
+    data.dailyRecords[recordIndex] = updatedRecord;
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true, record: updatedRecord });
+  } catch (error) {
+    console.error('Error updating daily record:', error);
+    res.status(500).json({ error: 'Failed to update daily record' });
+  }
+});
+
+// Delete daily record
+app.delete('/api/daily-records/:id', requireAuth, (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    if (!data.dailyRecords) {
+      return res.status(404).json({ error: 'Daily records not found' });
+    }
+    
+    const recordIndex = data.dailyRecords.findIndex(record => record.id === req.params.id);
+    if (recordIndex === -1) {
+      return res.status(404).json({ error: 'Record not found' });
+    }
+    
+    data.dailyRecords.splice(recordIndex, 1);
+    fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
+    res.json({ success: true, message: 'Record deleted successfully' });
+  } catch (error) {
+    console.error('Error deleting daily record:', error);
+    res.status(500).json({ error: 'Failed to delete daily record' });
+  }
+});
+
+// Get daily records by mouse ID
+app.get('/api/daily-records/mouse/:mouseId', requireAuth, (req, res) => {
+  try {
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    const mouseRecords = (data.dailyRecords || []).filter(record => record.mouseId === req.params.mouseId);
+    res.json(mouseRecords);
+  } catch (error) {
+    console.error('Error reading mouse daily records:', error);
+    res.status(500).json({ error: 'Failed to read mouse daily records' });
+  }
+});
+
+// Get daily records by date range
+app.get('/api/daily-records/date-range', requireAuth, (req, res) => {
+  try {
+    const { startDate, endDate } = req.query;
+    const data = JSON.parse(fs.readFileSync(DATA_FILE, 'utf8'));
+    
+    let filteredRecords = data.dailyRecords || [];
+    
+    if (startDate) {
+      filteredRecords = filteredRecords.filter(record => record.date >= startDate);
+    }
+    
+    if (endDate) {
+      filteredRecords = filteredRecords.filter(record => record.date <= endDate);
+    }
+    
+    res.json(filteredRecords);
+  } catch (error) {
+    console.error('Error reading daily records by date range:', error);
+    res.status(500).json({ error: 'Failed to read daily records by date range' });
+  }
+});
+
 // Login page
 app.get('/login', (req, res) => {
   const loginPage = `
